@@ -15,14 +15,20 @@ type Round = {
 
 const DEFAULTS: LocalSettings = { game: "lol", n: 5, imp: 1, hint: true, seconds: 180, cats: poolNames("lol"), names: [] };
 /** Discussion timer choices; 0 = no timer (∞), placed last so "+" ends on ∞. */
+const RENAMED: Record<string, string> = {
+  "Summoner Spells": "Spells & Runes",
+  Regions: "Regions & Factions",
+  "Map & Objectives": "World & Objectives",
+  "Factions & Lore": "World & Objectives",
+};
 const TIMES = [60, 120, 180, 240, 300, 0];
 
 export function Local(p: { onExit: () => void }) {
   const [s, setS] = useState<LocalSettings>(() => {
     const v = { ...DEFAULTS, ...store.get<Partial<LocalSettings>>("lolster.local", {}) };
     if (!isGame(v.game)) v.game = "lol";
-    // "Summoner Spells" was folded into "Spells & Runes".
-    if (v.cats.includes("Summoner Spells")) v.cats = [...v.cats, "Spells & Runes"];
+    // Pools that were renamed or merged in later versions.
+    v.cats = [...new Set(v.cats.map((c) => RENAMED[c] ?? c))];
     v.cats = v.cats.filter((c) => poolNames(v.game).includes(c));
     if (!v.cats.length) v.cats = poolNames(v.game);
     return v;
