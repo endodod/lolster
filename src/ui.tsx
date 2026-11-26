@@ -5,26 +5,32 @@ import { GAMES, poolNames, type Game } from "./shared/words";
 export function Stepper(p: {
   label: string;
   value: number;
-  min: number;
-  max: number;
+  min?: number;
+  max?: number;
+  /** Step through these exact choices instead of min..max. */
+  values?: number[];
   onChange?: (v: number) => void;
   format?: (v: number) => string;
-  step?: number;
 }) {
-  const step = p.step ?? 1;
   const ro = !p.onChange;
+  const vals = p.values;
+  const idx = vals ? Math.max(0, vals.indexOf(p.value)) : 0;
+  const canDec = vals ? idx > 0 : p.value > (p.min ?? -Infinity);
+  const canInc = vals ? idx < vals.length - 1 : p.value < (p.max ?? Infinity);
+  const dec = () => p.onChange!(vals ? vals[idx - 1] : p.value - 1);
+  const inc = () => p.onChange!(vals ? vals[idx + 1] : p.value + 1);
   return (
     <div class="row">
       <span class="lbl">{p.label}</span>
       <div class="step">
         {!ro && (
-          <button aria-label={`Fewer ${p.label}`} disabled={p.value <= p.min} onClick={() => p.onChange!(Math.max(p.min, p.value - step))}>
+          <button aria-label={`Fewer ${p.label}`} disabled={!canDec} onClick={dec}>
             −
           </button>
         )}
         <b>{p.format ? p.format(p.value) : p.value}</b>
         {!ro && (
-          <button aria-label={`More ${p.label}`} disabled={p.value >= p.max} onClick={() => p.onChange!(Math.min(p.max, p.value + step))}>
+          <button aria-label={`More ${p.label}`} disabled={!canInc} onClick={inc}>
             +
           </button>
         )}
@@ -79,7 +85,8 @@ export function Pools(p: { game: Game; value: string[]; onChange?: (v: string[])
   );
 }
 
-export const fmtTime = (s: number) => (s <= 0 ? "Off" : s < 60 ? `${s}s` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`);
+/** Seconds as "45s" / "1:30"; 0 or less means no limit. */
+export const fmtTime = (s: number) => (s <= 0 ? "∞" : s < 60 ? `${s}s` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`);
 
 /** Live countdown to an absolute timestamp. `offset` corrects for server clock skew. */
 export function useCountdown(endsAt: number | undefined, offset = 0) {

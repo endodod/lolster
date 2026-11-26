@@ -14,7 +14,8 @@ type Round = {
 };
 
 const DEFAULTS: LocalSettings = { game: "lol", n: 5, imp: 1, hint: true, seconds: 180, cats: poolNames("lol"), names: [] };
-const TIMES = [0, 60, 120, 180, 240, 300];
+/** Discussion timer choices; 0 = no timer (∞), placed last so "+" ends on ∞. */
+const TIMES = [60, 120, 180, 240, 300, 0];
 
 export function Local(p: { onExit: () => void }) {
   const [s, setS] = useState<LocalSettings>(() => {
@@ -94,11 +95,10 @@ export function Local(p: { onExit: () => void }) {
           <Switch label="Imposter sees category" checked={s.hint} onChange={(hint) => update({ hint })} />
           <Stepper
             label="Discussion timer"
-            value={TIMES.indexOf(s.seconds) < 0 ? 3 : TIMES.indexOf(s.seconds)}
-            min={0}
-            max={TIMES.length - 1}
-            format={(i) => fmtTime(TIMES[i])}
-            onChange={(i) => update({ seconds: TIMES[i] })}
+            value={TIMES.includes(s.seconds) ? s.seconds : 180}
+            values={TIMES}
+            format={fmtTime}
+            onChange={(seconds) => update({ seconds })}
           />
         </Panel>
         <Pools game={s.game} value={s.cats} onChange={(cats) => update({ cats })} />

@@ -8,9 +8,9 @@ export type Settings = {
   hint: boolean;
   /** Enabled word pools. */
   cats: string[];
-  /** Typed clue rounds before voting. 0 = clues are spoken (voice call / same room). */
+  /** Typed clue rounds before voting. 0 = clues are spoken (voice call / same room). INF = until the host starts the vote. */
   clueRounds: number;
-  /** Seconds for discussion before voting opens automatically. 0 = host opens voting. */
+  /** Seconds of discussion before voting opens. 0 = skip straight to voting (voice mode: host opens it). INF = until the host opens voting. */
   discussSeconds: number;
   /** Seconds each player has to type a clue. 0 = no limit. */
   clueSeconds: number;
@@ -25,6 +25,14 @@ export const DEFAULT_SETTINGS: Settings = {
   discussSeconds: 0,
   clueSeconds: 45,
 };
+
+/** Sentinel for "no limit" on clue rounds and discussion time. */
+export const INF = -1;
+
+/** Stepper choices; INF / 0-as-unlimited sit at the top end so "+" ends on ∞. */
+export const CLUE_ROUND_CHOICES = [0, 1, 2, 3, 4, 5, INF];
+export const CLUE_SECONDS_CHOICES = [15, 30, 45, 60, 90, 120, 0];
+export const DISCUSS_CHOICES = [0, 30, 60, 90, 120, 180, 300, INF];
 
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 15;

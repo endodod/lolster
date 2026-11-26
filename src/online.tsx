@@ -2,6 +2,10 @@ import PartySocket from "partysocket";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import {
   CLUE_MAX,
+  CLUE_ROUND_CHOICES,
+  CLUE_SECONDS_CHOICES,
+  DISCUSS_CHOICES,
+  INF,
   maxImposters,
   MIN_PLAYERS,
   SKIP,
@@ -145,6 +149,7 @@ function Lobby({ state, send, onLeave }: G & { onLeave: () => void }) {
   };
   const set = (s: Partial<Settings>) => send({ t: "settings", settings: s });
   const st = state.settings;
+  const typed = st.clueRounds !== 0;
   const ro = !host;
 
   return (
@@ -201,32 +206,35 @@ function Lobby({ state, send, onLeave }: G & { onLeave: () => void }) {
         <Stepper
           label="Typed clue rounds"
           value={st.clueRounds}
-          min={0}
-          max={3}
-          format={(v) => (v ? String(v) : "Voice")}
+          values={CLUE_ROUND_CHOICES}
+          format={(v) => (v === INF ? "∞" : v ? String(v) : "Voice")}
           onChange={ro ? undefined : (clueRounds) => set({ clueRounds })}
         />
-        {st.clueRounds > 0 && (
+        {typed && (
           <Stepper
             label="Time per clue"
             value={st.clueSeconds}
-            min={0}
-            max={90}
-            step={15}
+            values={CLUE_SECONDS_CHOICES}
             format={fmtTime}
             onChange={ro ? undefined : (clueSeconds) => set({ clueSeconds })}
           />
         )}
         <Stepper
-          label={st.clueRounds > 0 ? "Discussion after clues" : "Discussion timer"}
-          value={st.discussSeconds}
-          min={0}
-          max={300}
-          step={30}
-          format={(v) => (v ? fmtTime(v) : st.clueRounds > 0 ? "Skip" : "Host")}
+          label={typed ? "Discussion after clues" : "Discussion timer"}
+          // In voice mode "skip" makes no sense; 0 behaves like ∞ (host opens voting).
+          value={!typed && st.discussSeconds === 0 ? INF : st.discussSeconds}
+          values={typed ? DISCUSS_CHOICES : DISCUSS_CHOICES.filter((v) => v !== 0)}
+          format={(v) => (v === INF ? "∞" : v ? fmtTime(v) : "Skip")}
           onChange={ro ? undefined : (discussSeconds) => set({ discussSeconds })}
         />
-        <small>{st.clueRounds > 0 ? "Clues are typed in turn, then everyone votes." : "Say your clues out loud (same room or voice call), then vote here."}</small>
+        <small>
+          {!typed
+            ? "Say your clues out loud (same room or voice call), then vote here."
+            : st.clueRounds === INF
+              ? "Clues keep going around until the host ends them."
+              : "Clues are typed in turn, then everyone votes."}
+          {st.discussSeconds === INF || (!typed && st.discussSeconds === 0) ? " The host opens voting when the table is ready." : ""}
+        </small>
       </Panel>
       <Pools game={st.game} value={st.cats} onChange={ro ? undefined : (cats) => set({ cats })} />
 
@@ -272,7 +280,8 @@ function Game(g: G) {
     <>
       <div class="prog">
         Round {state.round}
-        {state.clueRound && ` · Clue round ${state.clueRound} of ${state.settings.clueRounds}`}
+        {state.clueRound &&
+          ` · Clue round ${state.clueRound}${state.settings.clueRounds === INF ? "" : ` of ${state.settings.clueRounds}`}`}
       </div>
       {spectating && (
         <Panel class="center">
@@ -331,8 +340,11 @@ function Waiting({ state, text }: { state: RoomState; text: string }) {
 }
 
 function ClueList({ state }: { state: RoomState }) {
-  const rounds = state.settings.clueRounds || 1;
   const n = state.order.length;
+  const rounds =
+    state.settings.clueRounds === INF
+      ? Math.max(1, Math.ceil(state.clues.length / n), state.clueRound ?? 0)
+      : state.settings.clueRounds || 1;
   if (!state.clues.length && state.phase !== "clues") return null;
   const grouped = Array.from({ length: rounds }, (_, i) => state.clues.slice(i * n, (i + 1) * n));
   return (
@@ -372,6 +384,7 @@ function Clues(g: G & { left: number | null }) {
     setText("");
   }, [mine, state.clues.length]);
   const host = state.hostId === state.you.id;
+  const endless = state.settings.clueRounds === INF;
   return (
     <>
       <Secret {...g} />
@@ -405,8 +418,10 @@ function Clues(g: G & { left: number | null }) {
       </Panel>
       <ClueList state={state} />
       {host && (
-        <button class="ghost" onClick={() => send({ t: "openVote" })}>
-          Skip to voting
+        <button class={endless ? "big" : "ghost"} onClick={() => send({ t: "openVote" })}>
+          {state.settings.discussSeconds !== 0
+            ? endless ? "End clues & discuss" : "Skip to discussion"
+            : endless ? "Start the vote" : "Skip to voting"}
         </button>
       )}
     </>
@@ -417,6 +432,7 @@ function Discuss(g: G & { left: number | null }) {
   const { state, send } = g;
   const host = state.hostId === state.you.id;
   const voice = state.settings.clueRounds === 0;
+  const endless = state.settings.discussSeconds === INF || (voice && state.settings.discussSeconds === 0);
   return (
     <>
       <Secret {...g} />
@@ -431,7 +447,8 @@ function Discuss(g: G & { left: number | null }) {
           <div class="who">Discuss</div>
         )}
         <Timer left={g.left} done="Vote!" />
-        {!host && !g.left && <p class="hint">The host opens voting when you're ready.</p>}
+        {endless && <div class="timer">∞</div>}
+        {!host && endless && <p class="hint">The host opens voting when you're ready.</p>}
       </Panel>
       <ClueList state={state} />
       {host && (

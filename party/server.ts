@@ -2,7 +2,11 @@ import { routePartykitRequest, Server, type Connection } from "partyserver";
 import { drawWord, guessOptions, imposterIntel, shuffle } from "../src/shared/words";
 import {
   CLUE_MAX,
+  CLUE_ROUND_CHOICES,
+  CLUE_SECONDS_CHOICES,
   DEFAULT_SETTINGS,
+  DISCUSS_CHOICES,
+  INF,
   MAX_PLAYERS,
   MIN_PLAYERS,
   NAME_MAX,
@@ -170,7 +174,11 @@ export class LolsterRoom extends Server {
       }
       case "openVote": {
         if (!isHost || (this.phase !== "discuss" && this.phase !== "clues")) return;
-        this.openVote();
+        // Ending the clue phase early still honours a configured discussion.
+        if (this.phase === "clues" && this.settings.discussSeconds !== 0) {
+          this.setPhase("discuss");
+          this.armDiscussTimer();
+        } else this.openVote();
         break;
       }
       case "vote": {
@@ -262,7 +270,7 @@ export class LolsterRoom extends Server {
     if (!r) return;
     const active = r.order.filter((pid) => this.connected(pid));
     if (this.phase === "reveal" && active.every((pid) => r.ready.has(pid))) {
-      if (this.settings.clueRounds > 0) {
+      if (this.settings.clueRounds !== 0) {
         r.turnIdx = 0;
         this.setPhase("clues");
         this.skipAbsentTurns();
@@ -288,6 +296,7 @@ export class LolsterRoom extends Server {
   }
 
   totalTurns() {
+    if (this.settings.clueRounds === INF) return Infinity;
     return (this.round?.order.length ?? 0) * this.settings.clueRounds;
   }
 
@@ -300,11 +309,13 @@ export class LolsterRoom extends Server {
 
   skipAbsentTurns() {
     const r = this.round!;
+    // With endless rounds, stop scanning if nobody in the round is connected.
+    if (!r.order.some((pid) => this.connected(pid))) return;
     while (r.turnIdx < this.totalTurns() && !this.connected(r.order[r.turnIdx % r.order.length])) {
       r.turnIdx++;
     }
     if (r.turnIdx >= this.totalTurns()) {
-      if (this.settings.discussSeconds > 0) {
+      if (this.settings.discussSeconds !== 0) {
         this.setPhase("discuss");
         this.armDiscussTimer();
       } else this.openVote();
@@ -459,6 +470,8 @@ export class LolsterRoom extends Server {
     const game = isGame(s.game) ? s.game : cur.game;
     const names = poolNames(game);
     // Switching game resets the pools to everything in the new game.
+    const choice = (v: unknown, allowed: number[], d: number) =>
+      v !== undefined && allowed.includes(Number(v)) ? Number(v) : d;
     let cats = game !== cur.game ? names : Array.isArray(s.cats) ? s.cats.filter((c) => names.includes(c)) : cur.cats;
     if (!cats.length) cats = cur.game === game ? cur.cats : names;
     this.settings = {
@@ -466,9 +479,9 @@ export class LolsterRoom extends Server {
       hint: typeof s.hint === "boolean" ? s.hint : cur.hint,
       game,
       cats,
-      clueRounds: int(s.clueRounds ?? cur.clueRounds, 0, 3, cur.clueRounds),
-      discussSeconds: int(s.discussSeconds ?? cur.discussSeconds, 0, 600, cur.discussSeconds),
-      clueSeconds: int(s.clueSeconds ?? cur.clueSeconds, 0, 120, cur.clueSeconds),
+      clueRounds: choice(s.clueRounds, CLUE_ROUND_CHOICES, cur.clueRounds),
+      discussSeconds: choice(s.discussSeconds, DISCUSS_CHOICES, cur.discussSeconds),
+      clueSeconds: choice(s.clueSeconds, CLUE_SECONDS_CHOICES, cur.clueSeconds),
     };
   }
 
