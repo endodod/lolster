@@ -4,6 +4,7 @@ An imposter party game with League of Legends or Deadlock words. Everyone gets t
 
 - **Pass & play**: one phone passed around the table (no network needed).
 - **Online**: create a lobby, share the 4-letter code or link, play from your own devices. Clues can be typed in turns or spoken (voice / same room).
+- **Chat**: a lobby chat on the right (a slide-in drawer on phones), with join/leave/host-change notices.
 - **Discreet mode** (online, per device): hold-to-peek cards and identical card colours for every role, for players sitting next to each other on laptops. Press `C` to cover the screen.
 - No accounts, no database: each lobby lives in memory in its own Durable Object and disappears when everyone leaves.
 

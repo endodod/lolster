@@ -143,5 +143,29 @@ small { color: var(--mute); font-size: 13px; }
 .seg button { border: 0; border-radius: 0; background: #0f1d30; font-weight: 600; }
 .seg button[aria-checked=true] { background: linear-gradient(180deg, #f0e6d2, var(--gold)); color: #0a1428; }
 .seg button:disabled { opacity: .5; }
+/* Chat: a column on the right on wide screens, a slide-in drawer on phones */
+.chat { margin: 0; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.chat-head { display: flex; align-items: center; justify-content: space-between; min-height: 32px; }
+.chat-head button { min-height: 32px; min-width: 32px; padding: 0 8px; font-size: 13px; }
+.chat-log { list-style: none; margin: 0; padding: 0 2px 0 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 6px; }
+.chat-log li { font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
+.chat-log .by { color: var(--gold); margin-right: 6px; font-weight: 600; }
+.chat-log .by .badge { margin-left: 5px; font-size: 9px; vertical-align: 1px; }
+.chat-log li.mine .by { color: var(--teal); }
+.chat-log li.sys { color: var(--mute); font-size: 13px; font-style: italic; text-align: center; }
+.chat-form button { min-width: 64px; }
+.chat-fab { position: fixed; right: 16px; bottom: 16px; z-index: 30; min-height: 48px; border-radius: 24px; padding: 0 18px; background: #1e2328; border-color: var(--gold); box-shadow: 0 8px 24px #000a; }
+.chat-unread { display: inline-block; margin-left: 8px; min-width: 22px; padding: 0 6px; border-radius: 11px; background: var(--red); color: #fff; font-size: 13px; line-height: 22px; }
+.chat-scrim { position: fixed; inset: 0; z-index: 39; background: #0008; }
+main.has-chat { padding-bottom: 88px; }
+@media (max-width: 959px) {
+  .chat { position: fixed; top: 0; right: 0; bottom: 0; z-index: 40; width: min(380px, 100vw); border-radius: 0; border-width: 0 0 0 1px; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); transform: translateX(100%); visibility: hidden; transition: transform .2s, visibility .2s; }
+  .chat.open { transform: none; visibility: visible; }
+}
+@media (min-width: 960px) {
+  main.has-chat { max-width: 904px; padding-bottom: 48px; }
+  .room { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+  .chat { position: sticky; top: 16px; height: calc(100dvh - 32px); }
+}
 [hidden] { display: none !important; }
-@media (prefers-reduced-motion: reduce) { .inner, .sw::after { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .inner, .sw::after, .chat { transition: none; } }

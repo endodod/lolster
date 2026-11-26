@@ -9,11 +9,13 @@ import {
   maxImposters,
   MIN_PLAYERS,
   SKIP,
+  type ChatMsg,
   type ClientMsg,
   type RoomState,
   type ServerMsg,
   type Settings,
 } from "./shared/types";
+import { Chat } from "./chat";
 import { playerId, store } from "./store";
 import { Card, fmtTime, GamePicker, Panel, Peek, Pools, Stepper, Switch, Timer, Toast, useCountdown, useCover, type CardFace } from "./ui";
 
@@ -26,6 +28,7 @@ function useRoom(code: string, name: string) {
   const [conn, setConn] = useState<Conn>("connecting");
   const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
+  const [chat, setChat] = useState<ChatMsg[]>([]);
   const ws = useRef<PartySocket | null>(null);
   const nameRef = useRef(name);
   nameRef.current = name;
@@ -43,7 +46,9 @@ function useRoom(code: string, name: string) {
       if (m.t === "state") {
         setState(m.state);
         setOffset(m.now - Date.now());
-      } else if (m.t === "error") setError(m.message);
+      } else if (m.t === "chat")
+        setChat((c) => (m.reset ? m.msgs : [...c, ...m.msgs.filter((x) => !c.some((y) => y.id === x.id))].slice(-100)));
+      else if (m.t === "error") setError(m.message);
       else if (m.t === "kicked") {
         setConn("kicked");
         s.close();
@@ -53,11 +58,11 @@ function useRoom(code: string, name: string) {
   }, [code]);
 
   const send = (m: ClientMsg) => ws.current?.send(JSON.stringify(m));
-  return { state, conn, error, setError, offset, send, leave: () => { send({ t: "leave" }); ws.current?.close(); } };
+  return { state, conn, error, setError, offset, chat, send, leave: () => { send({ t: "leave" }); ws.current?.close(); } };
 }
 
 export function Online(p: { code: string; name: string; onExit: () => void }) {
-  const { state, conn, error, setError, offset, send, leave } = useRoom(p.code, p.name);
+  const { state, conn, error, setError, offset, chat, send, leave } = useRoom(p.code, p.name);
   const [discreet, setDiscreet] = useState(() => store.get("lolster.discreet", true));
   const { cover, overlay } = useCover();
   const toggleDiscreet = () => {
@@ -115,13 +120,16 @@ export function Online(p: { code: string; name: string; onExit: () => void }) {
 
   const g = { state, send, offset, discreet };
   return (
-    <section>
-      {top}
-      {conn !== "open" && <div class="toast">Reconnecting…</div>}
-      {state.phase === "lobby" ? <Lobby {...g} onLeave={exit} /> : <Game {...g} />}
-      <Toast msg={error} onDone={() => setError(null)} />
+    <div class="room">
+      <section>
+        {top}
+        {conn !== "open" && <div class="toast">Reconnecting…</div>}
+        {state.phase === "lobby" ? <Lobby {...g} onLeave={exit} /> : <Game {...g} />}
+        <Toast msg={error} onDone={() => setError(null)} />
+      </section>
+      <Chat log={chat} me={state.you.id} hostId={state.hostId} onSend={(text) => send({ t: "chat", text })} />
       {overlay}
-    </section>
+    </div>
   );
 }
 
@@ -178,8 +186,11 @@ function Lobby({ state, send, onLeave }: G & { onLeave: () => void }) {
               {host && pl.id !== me && (
                 <>
                   {pl.connected && (
-                    <button onClick={() => send({ t: "host", id: pl.id })} title="Make host">
-                      Host
+                    <button
+                      onClick={() => confirm(`Hand host over to ${pl.name}? Only they will be able to start rounds and votes.`) && send({ t: "host", id: pl.id })}
+                      title={`Make ${pl.name} the host`}
+                    >
+                      Make host
                     </button>
                   )}
                   <button class="danger" onClick={() => send({ t: "kick", id: pl.id })} aria-label={`Remove ${pl.name}`}>
@@ -381,7 +392,8 @@ function Clues(g: G & { left: number | null }) {
   const [text, setText] = useState("");
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (mine) input.current?.focus();
+    // Don't yank focus out of the chat box mid-message.
+    if (mine && !(document.activeElement instanceof HTMLInputElement)) input.current?.focus();
     setText("");
   }, [mine, state.clues.length]);
   const host = state.hostId === state.you.id;

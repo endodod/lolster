@@ -38,6 +38,7 @@ export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 15;
 export const NAME_MAX = 16;
 export const CLUE_MAX = 28;
+export const CHAT_MAX = 200;
 
 export const maxImposters = (n: number) => Math.max(1, Math.floor((n - 1) / 2));
 
@@ -133,10 +134,16 @@ export type ClientMsg =
   | { t: "lobby" }
   | { t: "kick"; id: string }
   | { t: "host"; id: string }
+  | { t: "chat"; text: string }
   | { t: "leave" };
+
+/** A lobby chat line. `sys` lines are announcements (joins, leaves, host changes). */
+export type ChatMsg = { id: number; pid?: string; name: string; text: string; at: number; sys?: boolean };
 
 export type ServerMsg =
   | { t: "state"; state: RoomState; now: number }
+  /** `reset`: the full log (sent on join); otherwise new lines to append. */
+  | { t: "chat"; msgs: ChatMsg[]; reset?: boolean }
   | { t: "error"; message: string }
   | { t: "kicked" };
 

@@ -1,6 +1,7 @@
 import { routePartykitRequest, Server, type Connection } from "partyserver";
 import { drawWord, guessOptions, imposterIntel, shuffle } from "../src/shared/words";
 import {
+  CHAT_MAX,
   CLUE_MAX,
   CLUE_ROUND_CHOICES,
   CLUE_SECONDS_CHOICES,
@@ -13,6 +14,7 @@ import {
   NAME_MAX,
   SKIP,
   maxImposters,
+  type ChatMsg,
   type ClientMsg,
   type Clue,
   type Phase,
@@ -30,6 +32,7 @@ type Player = {
   score: number;
   joinedAt: number;
   leftAt?: number;
+  lastChatAt?: number;
 };
 
 type Round = {
@@ -53,6 +56,10 @@ type Round = {
 const GUESS_SECONDS = 30;
 /** Players who drop out of the lobby are removed after this long. */
 const LOBBY_GRACE_MS = 45_000;
+/** A host who drops (tab switch, flaky wifi) keeps the role this long before it moves on. */
+const HOST_GRACE_MS = 20_000;
+const CHAT_LOG = 100;
+const CHAT_GAP_MS = 400;
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -60,6 +67,11 @@ const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 export class LolsterRoom extends Server {
   players = new Map<string, Player>();
   hostId = "";
+  /** The intended host: the lobby creator, or whoever the host handed it to. Gets the role back on reconnect. */
+  ownerId = "";
+  hostTimer: ReturnType<typeof setTimeout> | undefined;
+  chat: ChatMsg[] = [];
+  chatSeq = 0;
   phase: Phase = "lobby";
   roundNo = 0;
   settings: Settings = { ...DEFAULT_SETTINGS, cats: [...POOL_NAMES] };
@@ -77,7 +89,7 @@ export class LolsterRoom extends Server {
     if (p) {
       p.connected = true;
       p.leftAt = undefined;
-      if (!this.connected(this.hostId)) this.hostId = p.id;
+      this.sendTo(conn, { t: "chat", msgs: this.chat, reset: true });
       this.broadcast();
     } else {
       this.sendTo(conn, this.stateFor(conn.id));
@@ -91,12 +103,12 @@ export class LolsterRoom extends Server {
     for (const c of this.getConnections()) if (c.id === conn.id && c !== conn) return;
     p.connected = false;
     p.leftAt = Date.now();
-    if (this.hostId === p.id) this.passHost();
     if (this.phase === "lobby") {
       setTimeout(() => {
         const q = this.players.get(p.id);
         if (q && !q.connected && this.phase === "lobby") {
           this.players.delete(p.id);
+          this.system(`${q.name} left`);
           this.broadcast();
         }
       }, LOBBY_GRACE_MS);
@@ -127,8 +139,9 @@ export class LolsterRoom extends Server {
         } else {
           if (this.players.size >= MAX_PLAYERS) return this.error(sender, "This lobby is full.");
           this.players.set(id, { id, name, connected: true, score: 0, joinedAt: Date.now() });
+          this.system(`${name} joined`);
         }
-        if (!this.connected(this.hostId)) this.hostId = id;
+        this.sendTo(sender, { t: "chat", msgs: this.chat, reset: true });
         break;
       }
       case "rename": {
@@ -136,7 +149,19 @@ export class LolsterRoom extends Server {
         if (p) p.name = this.uniqueName(String(msg.name ?? ""), id);
         break;
       }
+      case "chat": {
+        const p = this.players.get(id);
+        const text = String(msg.text ?? "").replace(/\s+/g, " ").trim().slice(0, CHAT_MAX);
+        if (!p || !text) return;
+        const now = Date.now();
+        if (p.lastChatAt && now - p.lastChatAt < CHAT_GAP_MS) return;
+        p.lastChatAt = now;
+        this.post({ pid: id, name: p.name, text });
+        return;
+      }
       case "leave": {
+        const p = this.players.get(id);
+        if (p) this.system(`${p.name} left`);
         this.removePlayer(id);
         sender.close();
         break;
@@ -215,12 +240,15 @@ export class LolsterRoom extends Server {
             c.close();
           }
         }
+        const p = this.players.get(target);
+        if (p) this.system(`${p.name} was removed by the host`);
         this.removePlayer(target);
         break;
       }
       case "host": {
         if (!isHost || !this.connected(msg.id)) return;
-        this.hostId = msg.id;
+        this.hostId = this.ownerId = msg.id;
+        this.system(`${this.players.get(msg.id)!.name} is now the host`);
         break;
       }
       default:
@@ -462,16 +490,49 @@ export class LolsterRoom extends Server {
     return !!id && !!this.players.get(id)?.connected;
   }
 
-  passHost() {
-    const next = [...this.players.values()]
-      .filter((p) => p.connected)
-      .sort((a, b) => a.joinedAt - b.joinedAt)[0];
-    if (next) this.hostId = next.id;
+  /**
+   * Keeps `hostId` on the right person. The owner is host whenever they're connected. If the host drops,
+   * they keep the role for HOST_GRACE_MS (so a refresh or a quick app switch doesn't hand it away);
+   * after that the earliest-joined connected player stands in until the owner comes back.
+   */
+  fixHost() {
+    const before = this.hostId;
+    if (this.ownerId && !this.players.has(this.ownerId)) this.ownerId = "";
+    if (this.connected(this.ownerId)) this.hostId = this.ownerId;
+    else if (!this.connected(this.hostId)) {
+      const h = this.players.get(this.hostId);
+      const wait = h?.leftAt ? h.leftAt + HOST_GRACE_MS - Date.now() : 0;
+      if (wait > 0) {
+        if (!this.hostTimer)
+          this.hostTimer = setTimeout(() => {
+            this.hostTimer = undefined;
+            this.broadcast();
+          }, wait + 50);
+      } else {
+        const next = [...this.players.values()].filter((p) => p.connected).sort((a, b) => a.joinedAt - b.joinedAt)[0];
+        if (next) this.hostId = next.id;
+      }
+    }
+    // The lobby creator (or a host whose owner has left for good) becomes the owner.
+    if (!this.ownerId && this.connected(this.hostId)) this.ownerId = this.hostId;
+    if (before && this.hostId !== before && this.connected(this.hostId))
+      this.system(`${this.players.get(this.hostId)!.name} is now the host`);
+  }
+
+  post(m: Omit<ChatMsg, "id" | "at">) {
+    const msg: ChatMsg = { ...m, id: ++this.chatSeq, at: Date.now() };
+    this.chat.push(msg);
+    if (this.chat.length > CHAT_LOG) this.chat.splice(0, this.chat.length - CHAT_LOG);
+    const out = JSON.stringify({ t: "chat", msgs: [msg] } satisfies ServerMsg);
+    for (const c of this.getConnections()) if (this.players.has(c.id)) c.send(out);
+  }
+
+  system(text: string) {
+    this.post({ name: "", text, sys: true });
   }
 
   removePlayer(id: string) {
     if (!this.players.delete(id)) return;
-    if (this.hostId === id) this.passHost();
     const r = this.round;
     if (r && r.order.includes(id)) {
       const remaining = r.order.filter((pid) => pid !== id);
@@ -603,6 +664,7 @@ export class LolsterRoom extends Server {
   }
 
   broadcast() {
+    this.fixHost();
     for (const c of this.getConnections()) this.sendTo(c, this.stateFor(c.id));
   }
 }

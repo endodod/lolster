@@ -48,7 +48,7 @@ export function App() {
 
   if (route.kind === "room" && clean && named)
     return (
-      <main>
+      <main class="has-chat">
         <Online code={route.code} name={clean} onExit={() => go({ kind: "home" })} />
       </main>
     );
