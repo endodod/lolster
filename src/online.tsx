@@ -74,10 +74,15 @@ export function Online(p: { code: string; name: string; onExit: () => void }) {
     leave();
     p.onExit();
   };
+  // Mid-round, leaving can end the round for everyone, so ask first.
+  const inGame = !!state && state.phase !== "lobby" && state.you.role !== "spectator";
+  const askExit = () => {
+    if (!inGame || confirm("Leave this game? You'll lose your seat and score.")) exit();
+  };
 
   const top = (
     <div class="topbar">
-      <button class="brand" onClick={exit} title="Leave lobby">
+      <button class="brand" onClick={askExit} title="Leave lobby">
         Lolster
       </button>
       <div class="tools">
@@ -86,6 +91,9 @@ export function Online(p: { code: string; name: string; onExit: () => void }) {
         </button>
         <button onClick={cover} title="Cover the screen (shortcut: C)">
           Cover <kbd>C</kbd>
+        </button>
+        <button class="danger" onClick={askExit} title="Leave this lobby">
+          Leave
         </button>
       </div>
     </div>

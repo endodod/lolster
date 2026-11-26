@@ -97,6 +97,8 @@ small { color: var(--mute); font-size: 13px; }
 .brand { font: 800 22px Cinzel, serif; color: var(--gold); background: none; border: 0; padding: 0; min-width: 0; }
 .tools { display: flex; gap: 6px; }
 .tools button { min-height: 36px; font-size: 13px; padding: 0 10px; }
+.tools button { flex: none; }
+@media (max-width: 420px) { .tools kbd { display: none; } .tools button { padding: 0 8px; } }
 .tools button[aria-pressed=true] { border-color: var(--teal); color: var(--teal); }
 .roomcode { text-align: center; }
 .roomcode .code { font: 800 46px/1 Cinzel, serif; letter-spacing: .25em; color: var(--ink); margin: 4px 0 10px; padding-left: .25em; }
