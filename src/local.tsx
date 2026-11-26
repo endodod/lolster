@@ -21,6 +21,8 @@ export function Local(p: { onExit: () => void }) {
   const [s, setS] = useState<LocalSettings>(() => {
     const v = { ...DEFAULTS, ...store.get<Partial<LocalSettings>>("lolster.local", {}) };
     if (!isGame(v.game)) v.game = "lol";
+    // "Summoner Spells" was folded into "Spells & Runes".
+    if (v.cats.includes("Summoner Spells")) v.cats = [...v.cats, "Spells & Runes"];
     v.cats = v.cats.filter((c) => poolNames(v.game).includes(c));
     if (!v.cats.length) v.cats = poolNames(v.game);
     return v;

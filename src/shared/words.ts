@@ -14,10 +14,10 @@ export const TREE: Record<string, Record<string, string[]>> = {
     "Mage items": ["Rabadon's Deathcap", "Zhonya's Hourglass", "Lich Bane", "Mejai's Soulstealer", "Void Staff", "Rylai's Crystal Scepter", "Morellonomicon", "Hextech Rocketbelt", "Luden's Companion", "Banshee's Veil"],
     "Tank items": ["Thornmail", "Warmog's Armor", "Sunfire Aegis", "Randuin's Omen", "Frozen Heart", "Heartsteel"],
   },
-  "Summoner Spells": {
-    "Offensive spells": ["Ignite", "Smite", "Exhaust"],
-    "Movement spells": ["Flash", "Ghost", "Teleport", "Mark (Snowball)"],
-    "Defensive & sustain spells": ["Barrier", "Heal", "Cleanse", "Clarity"],
+  "Spells & Runes": {
+    "Summoner spells": ["Flash", "Ignite", "Teleport", "Smite", "Exhaust", "Ghost", "Barrier", "Heal", "Cleanse", "Clarity", "Mark (Snowball)"],
+    "Keystone runes": ["Press the Attack", "Lethal Tempo", "Fleet Footwork", "Conqueror", "Electrocute", "Dark Harvest", "Hail of Blades", "Summon Aery", "Arcane Comet", "Phase Rush", "Grasp of the Undying", "Aftershock", "Guardian", "Glacial Augment", "Unsealed Spellbook", "First Strike"],
+    "Rune paths & minor runes": ["Precision", "Domination", "Sorcery", "Resolve", "Inspiration", "Triumph", "Coup de Grace", "Cut Down", "Last Stand", "Presence of Mind", "Taste of Blood", "Sudden Impact", "Treasure Hunter", "Nimbus Cloak", "Manaflow Band", "Transcendence", "Gathering Storm", "Scorch", "Demolish", "Second Wind", "Bone Plating", "Overgrowth", "Unflinching", "Magical Footwear", "Cash Back", "Biscuit Delivery", "Cosmic Insight", "Hextech Flashtraption"],
   },
   "Monsters & Objectives": {
     "Epic monsters": ["Baron Nashor", "Elder Dragon", "Rift Herald", "Voidgrubs", "Atakhan", "Infernal Drake", "Ocean Drake", "Mountain Drake", "Cloud Drake"],
