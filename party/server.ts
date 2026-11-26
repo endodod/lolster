@@ -58,6 +58,8 @@ const GUESS_SECONDS = 30;
 const LOBBY_GRACE_MS = 45_000;
 /** A host who drops (tab switch, flaky wifi) keeps the role this long before it moves on. */
 const HOST_GRACE_MS = 20_000;
+/** A game with fewer than MIN_PLAYERS connected goes back to the lobby after this long (time to refresh). */
+const QUORUM_GRACE_MS = 10_000;
 const CHAT_LOG = 100;
 const CHAT_GAP_MS = 400;
 
@@ -70,6 +72,7 @@ export class LolsterRoom extends Server {
   /** The intended host: the lobby creator, or whoever the host handed it to. Gets the role back on reconnect. */
   ownerId = "";
   hostTimer: ReturnType<typeof setTimeout> | undefined;
+  quorumTimer: ReturnType<typeof setTimeout> | undefined;
   chat: ChatMsg[] = [];
   chatSeq = 0;
   phase: Phase = "lobby";
@@ -519,6 +522,25 @@ export class LolsterRoom extends Server {
       this.system(`${this.players.get(this.hostId)!.name} is now the host`);
   }
 
+  /** In a game, fewer than MIN_PLAYERS connected players for QUORUM_GRACE_MS sends everyone back to the lobby. */
+  checkQuorum() {
+    const live = () => this.round?.order.filter((pid) => this.connected(pid)).length ?? 0;
+    const short = () => this.phase !== "lobby" && !!this.round && live() < MIN_PLAYERS;
+    if (!short()) {
+      clearTimeout(this.quorumTimer);
+      this.quorumTimer = undefined;
+      return;
+    }
+    if (this.quorumTimer) return;
+    this.quorumTimer = setTimeout(() => {
+      this.quorumTimer = undefined;
+      if (!short()) return;
+      this.system("Not enough players left. Back to the lobby.");
+      this.toLobby();
+      this.broadcast();
+    }, QUORUM_GRACE_MS);
+  }
+
   post(m: Omit<ChatMsg, "id" | "at">) {
     const msg: ChatMsg = { ...m, id: ++this.chatSeq, at: Date.now() };
     this.chat.push(msg);
@@ -538,6 +560,7 @@ export class LolsterRoom extends Server {
       const remaining = r.order.filter((pid) => pid !== id);
       const imps = r.imposters.filter((pid) => pid !== id);
       if (this.phase !== "result" && (remaining.length < MIN_PLAYERS || imps.length === 0)) {
+        this.system(remaining.length < MIN_PLAYERS ? "Not enough players left. Back to the lobby." : "The imposter left. Back to the lobby.");
         this.toLobby();
         return;
       }
@@ -665,6 +688,7 @@ export class LolsterRoom extends Server {
 
   broadcast() {
     this.fixHost();
+    this.checkQuorum();
     for (const c of this.getConnections()) this.sendTo(c, this.stateFor(c.id));
   }
 }

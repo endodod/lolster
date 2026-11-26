@@ -167,5 +167,6 @@ main.has-chat { padding-bottom: 88px; }
   .room { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
   .chat { position: sticky; top: 16px; height: calc(100dvh - 32px); }
 }
+.big + .panel, .ghost + .panel { margin-top: 14px; }
 [hidden] { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .inner, .sw::after, .chat { transition: none; } }

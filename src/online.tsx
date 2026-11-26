@@ -193,9 +193,7 @@ function Lobby({ state, send, onLeave }: G & { onLeave: () => void }) {
                       Make host
                     </button>
                   )}
-                  <button class="danger" onClick={() => send({ t: "kick", id: pl.id })} aria-label={`Remove ${pl.name}`}>
-                    ✕
-                  </button>
+                  <KickButton name={pl.name} onKick={() => send({ t: "kick", id: pl.id })} />
                 </>
               )}
             </li>
@@ -306,7 +304,7 @@ function Game(g: G) {
       {state.phase === "vote" && <Vote {...g} />}
       {state.phase === "guess" && <Guess {...g} left={left} />}
       {state.phase === "result" && <Result {...g} />}
-      <Scores state={state} />
+      <Players {...g} />
     </>
   );
 }
@@ -659,24 +657,37 @@ function Result({ state, send }: G) {
   );
 }
 
-function Scores({ state }: { state: RoomState }) {
-  if (state.round < 2 && state.phase !== "result") return null;
-  const sorted = [...state.players].sort((a, b) => b.score - a.score);
+function Players({ state, send }: G) {
+  const me = state.you.id;
+  const host = state.hostId === me;
+  const scored = state.round > 1 || state.phase === "result";
+  const sorted = scored ? [...state.players].sort((a, b) => b.score - a.score) : state.players;
   return (
     <Panel>
-      <span class="lbl">Scoreboard</span>
+      <span class="lbl">{scored ? "Scoreboard" : "Players"}</span>
       <ul class="players">
         {sorted.map((pl) => (
           <li>
-            <span class={`dot${pl.connected ? "" : " off"}`} />
+            <span class={`dot${pl.connected ? "" : " off"}`} title={pl.connected ? "Online" : "Offline"} />
             <span class="nm">
-              {pl.name} {pl.id === state.you.id && <span class="badge me">You</span>}
+              {pl.name} {pl.id === state.hostId && <span class="badge">Host</span>} {pl.id === me && <span class="badge me">You</span>}
             </span>
-            <span class="score">{pl.score}</span>
+            {scored && <span class="score">{pl.score}</span>}
+            {host && pl.id !== me && <KickButton name={pl.name} onKick={() => send({ t: "kick", id: pl.id })} />}
           </li>
         ))}
       </ul>
-      <small>Crew catch the imposter: +1 each, +2 if you voted them. Imposter escapes: +2. Caught but guesses the word: +2 (other imposters +1).</small>
+      {scored && (
+        <small>Crew catch the imposter: +1 each, +2 if you voted them. Imposter escapes: +2. Caught but guesses the word: +2 (other imposters +1).</small>
+      )}
     </Panel>
+  );
+}
+
+function KickButton(p: { name: string; onKick: () => void }) {
+  return (
+    <button class="danger" onClick={() => confirm(`Kick ${p.name} from the lobby?`) && p.onKick()} aria-label={`Kick ${p.name}`} title={`Kick ${p.name}`}>
+      Kick
+    </button>
   );
 }
