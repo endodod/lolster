@@ -7,6 +7,7 @@ import {
   DEFAULT_SETTINGS,
   DISCUSS_CHOICES,
   INF,
+  POLL_SECONDS,
   MAX_PLAYERS,
   MIN_PLAYERS,
   NAME_MAX,
@@ -40,6 +41,8 @@ type Round = {
   clues: Clue[];
   turnIdx: number;
   votes: Map<string, string>;
+  /** Between-rounds poll answers (endless clue rounds): true = vote now. */
+  poll: Map<string, boolean>;
   accused?: string;
   options?: string[];
   result?: ResultInfo;
@@ -173,12 +176,15 @@ export class LolsterRoom extends Server {
         break;
       }
       case "openVote": {
-        if (!isHost || (this.phase !== "discuss" && this.phase !== "clues")) return;
+        if (!isHost || (this.phase !== "discuss" && this.phase !== "clues" && this.phase !== "poll")) return;
+        if (this.phase === "discuss") this.openVote();
         // Ending the clue phase early still honours a configured discussion.
-        if (this.phase === "clues" && this.settings.discussSeconds !== 0) {
-          this.setPhase("discuss");
-          this.armDiscussTimer();
-        } else this.openVote();
+        else this.endClues();
+        break;
+      }
+      case "poll": {
+        if (this.phase !== "poll" || !r || !r.order.includes(id)) return;
+        r.poll.set(id, !!msg.now);
         break;
       }
       case "vote": {
@@ -247,6 +253,7 @@ export class LolsterRoom extends Server {
       clues: [],
       turnIdx: 0,
       votes: new Map(),
+      poll: new Map(),
       intel,
     };
     this.starter = order[0];
@@ -284,6 +291,8 @@ export class LolsterRoom extends Server {
       const before = r.turnIdx;
       this.skipAbsentTurns();
       if (r.turnIdx !== before && this.phase === "clues") this.armClueTimer();
+    } else if (this.phase === "poll" && active.length && active.every((pid) => r.poll.has(pid))) {
+      this.resolvePoll();
     } else if (this.phase === "vote" && active.length && active.every((pid) => r.votes.has(pid))) {
       this.tally();
     }
@@ -302,9 +311,43 @@ export class LolsterRoom extends Server {
 
   advanceTurn() {
     const r = this.round!;
+    const n = r.order.length;
+    const before = Math.floor(r.turnIdx / n);
     r.turnIdx++;
     this.skipAbsentTurns();
-    if (this.phase === "clues") this.armClueTimer();
+    if (this.phase !== "clues") return;
+    // Endless rounds: after every full round, ask the table whether to vote now.
+    if (this.settings.clueRounds === INF && Math.floor(r.turnIdx / n) > before) this.startPoll();
+    else this.armClueTimer();
+  }
+
+  startPoll() {
+    const r = this.round!;
+    r.poll.clear();
+    this.setPhase("poll");
+    this.schedule(POLL_SECONDS, () => this.resolvePoll());
+  }
+
+  /** Strict majority of answers for "vote now" ends the clues; otherwise play another round. */
+  resolvePoll() {
+    const r = this.round!;
+    if (this.phase !== "poll") return;
+    const answers = [...r.poll.values()];
+    const now = answers.filter(Boolean).length;
+    if (now > answers.length - now) return this.endClues();
+    this.clearTimer();
+    this.setPhase("clues");
+    this.skipAbsentTurns();
+    // skipAbsentTurns may have ended the clue phase (TS narrowed phase to "poll" above).
+    if ((this.phase as Phase) === "clues") this.armClueTimer();
+  }
+
+  /** Leave the clue phase: to discussion if one is configured, otherwise straight to voting. */
+  endClues() {
+    if (this.settings.discussSeconds !== 0) {
+      this.setPhase("discuss");
+      this.armDiscussTimer();
+    } else this.openVote();
   }
 
   skipAbsentTurns() {
@@ -314,12 +357,7 @@ export class LolsterRoom extends Server {
     while (r.turnIdx < this.totalTurns() && !this.connected(r.order[r.turnIdx % r.order.length])) {
       r.turnIdx++;
     }
-    if (r.turnIdx >= this.totalTurns()) {
-      if (this.settings.discussSeconds !== 0) {
-        this.setPhase("discuss");
-        this.armDiscussTimer();
-      } else this.openVote();
-    }
+    if (r.turnIdx >= this.totalTurns()) this.endClues();
   }
 
   armClueTimer() {
@@ -399,7 +437,7 @@ export class LolsterRoom extends Server {
 
   setPhase(p: Phase) {
     this.phase = p;
-    if (p !== "clues" && p !== "discuss" && p !== "guess") this.endsAt = undefined;
+    if (p !== "clues" && p !== "poll" && p !== "discuss" && p !== "guess") this.endsAt = undefined;
   }
 
   schedule(seconds: number, fn: () => void) {
@@ -450,6 +488,7 @@ export class LolsterRoom extends Server {
       r.order = remaining;
       r.imposters = imps;
       r.votes.delete(id);
+      r.poll.delete(id);
       for (const [v, t] of r.votes) if (t === id) r.votes.delete(v);
       r.clues = r.clues.filter((c) => c.pid !== id);
       if (this.phase === "clues") {
@@ -511,6 +550,7 @@ export class LolsterRoom extends Server {
         : { id, role: "crew", word: r.word, cat: r.cat };
       you.first = r.order[0] === id;
       you.vote = r.votes.get(id);
+      you.poll = this.phase === "poll" ? r.poll.get(id) : undefined;
     }
     const players = [...this.players.values()]
       .sort((a, b) => a.joinedAt - b.joinedAt)
@@ -522,6 +562,7 @@ export class LolsterRoom extends Server {
         inRound: inRound(p.id),
         ready: !!r?.ready.has(p.id),
         voted: !!r?.votes.has(p.id),
+        polled: this.phase === "poll" && !!r?.poll.has(p.id),
       }));
     return {
       code: this.name,
@@ -534,7 +575,16 @@ export class LolsterRoom extends Server {
       starter: this.starter,
       clues: r?.clues ?? [],
       turn: this.currentTurn(),
-      clueRound: r && this.phase === "clues" ? Math.floor(r.turnIdx / r.order.length) + 1 : undefined,
+      clueRound:
+        r && this.phase === "clues"
+          ? Math.floor(r.turnIdx / r.order.length) + 1
+          : r && this.phase === "poll"
+            ? Math.floor(r.turnIdx / r.order.length)
+            : undefined,
+      pollTally:
+        r && this.phase === "poll"
+          ? { now: [...r.poll.values()].filter(Boolean).length, more: [...r.poll.values()].filter((v) => !v).length }
+          : undefined,
       endsAt: this.endsAt,
       accused: this.phase === "guess" || this.phase === "result" ? r?.accused : undefined,
       options: this.phase === "guess" ? r?.options : undefined,

@@ -231,7 +231,7 @@ function Lobby({ state, send, onLeave }: G & { onLeave: () => void }) {
           {!typed
             ? "Say your clues out loud (same room or voice call), then vote here."
             : st.clueRounds === INF
-              ? "Clues keep going around until the host ends them."
+              ? "Clues keep going around. After each round everyone chooses: vote now or another round."
               : "Clues are typed in turn, then everyone votes."}
           {st.discussSeconds === INF || (!typed && st.discussSeconds === 0) ? " The host opens voting when the table is ready." : ""}
         </small>
@@ -290,6 +290,7 @@ function Game(g: G) {
       )}
       {state.phase === "reveal" && <Reveal {...g} />}
       {state.phase === "clues" && <Clues {...g} left={left} />}
+      {state.phase === "poll" && <Poll {...g} left={left} />}
       {state.phase === "discuss" && <Discuss {...g} left={left} />}
       {state.phase === "vote" && <Vote {...g} />}
       {state.phase === "guess" && <Guess {...g} left={left} />}
@@ -422,6 +423,47 @@ function Clues(g: G & { left: number | null }) {
           {state.settings.discussSeconds !== 0
             ? endless ? "End clues & discuss" : "Skip to discussion"
             : endless ? "Start the vote" : "Skip to voting"}
+        </button>
+      )}
+    </>
+  );
+}
+
+function Poll(g: G & { left: number | null }) {
+  const { state, send } = g;
+  const host = state.hostId === state.you.id;
+  const inRound = state.players.filter((x) => x.inRound && x.connected);
+  const t = state.pollTally ?? { now: 0, more: 0 };
+  const waiting = inRound.filter((x) => !x.polled).length;
+  const mine = state.you.poll;
+  const canPoll = state.you.role !== "spectator";
+  return (
+    <>
+      <Secret {...g} />
+      <Panel class="center">
+        <div class="hint" style="margin:0">Clue round {state.clueRound} done</div>
+        <h2 style="margin:6px 0 0">Vote now or another round?</h2>
+        <Timer left={g.left} />
+        {canPoll && (
+          <div class="votes" style="margin-top:10px">
+            <button aria-pressed={mine === true} onClick={() => send({ t: "poll", now: true })}>
+              Vote now
+            </button>
+            <button aria-pressed={mine === false} onClick={() => send({ t: "poll", now: false })}>
+              Another round
+            </button>
+          </div>
+        )}
+        <p class="hint">
+          {t.now} vote now · {t.more} another round{waiting ? ` · waiting on ${waiting}` : ""}
+          <br />
+          <small>Majority for "vote now" ends the clues. A tie means another round.</small>
+        </p>
+      </Panel>
+      <ClueList state={state} />
+      {host && (
+        <button class="ghost" onClick={() => send({ t: "openVote" })}>
+          {state.settings.discussSeconds !== 0 ? "End clues & discuss" : "Start the vote"}
         </button>
       )}
     </>

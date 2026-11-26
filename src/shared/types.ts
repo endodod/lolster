@@ -21,9 +21,9 @@ export const DEFAULT_SETTINGS: Settings = {
   imposters: 1,
   hint: true,
   cats: [],
-  clueRounds: 2,
+  clueRounds: -1, // INF: endless rounds, with a "vote now?" poll after each
   discussSeconds: 0,
-  clueSeconds: 45,
+  clueSeconds: 0, // no time limit
 };
 
 /** Sentinel for "no limit" on clue rounds and discussion time. */
@@ -41,7 +41,10 @@ export const CLUE_MAX = 28;
 
 export const maxImposters = (n: number) => Math.max(1, Math.floor((n - 1) / 2));
 
-export type Phase = "lobby" | "reveal" | "clues" | "discuss" | "vote" | "guess" | "result";
+/** "poll": endless clue rounds only — between rounds, players choose "vote now" or "another round". */
+export type Phase = "lobby" | "reveal" | "clues" | "poll" | "discuss" | "vote" | "guess" | "result";
+
+export const POLL_SECONDS = 20;
 
 export type PublicPlayer = {
   id: string;
@@ -52,6 +55,8 @@ export type PublicPlayer = {
   inRound: boolean;
   ready: boolean;
   voted: boolean;
+  /** Answered the between-rounds poll. */
+  polled: boolean;
 };
 
 export type Clue = { pid: string; text: string };
@@ -84,6 +89,8 @@ export type You = {
   /** You speak first this round. */
   first?: boolean;
   vote?: string;
+  /** Your poll answer: true = vote now, false = another round. */
+  poll?: boolean;
 };
 
 export type RoomState = {
@@ -100,6 +107,8 @@ export type RoomState = {
   /** Player whose turn it is to give a clue. */
   turn?: string;
   clueRound?: number;
+  /** Between-rounds poll tally (endless clue rounds). */
+  pollTally?: { now: number; more: number };
   endsAt?: number;
   /** During guess phase: the accused imposter and their options. */
   accused?: string;
@@ -117,6 +126,7 @@ export type ClientMsg =
   | { t: "clue"; text: string }
   | { t: "openVote" }
   | { t: "vote"; target: string }
+  | { t: "poll"; now: boolean }
   | { t: "endVote" }
   | { t: "guess"; word: string }
   | { t: "next" }
