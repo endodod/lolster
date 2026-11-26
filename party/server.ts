@@ -1,4 +1,4 @@
-import type * as Party from "partykit/server";
+import { routePartykitRequest, Server, type Connection } from "partyserver";
 import { drawWord, guessOptions, imposterIntel, shuffle } from "../src/shared/words";
 import {
   CLUE_MAX,
@@ -16,7 +16,7 @@ import {
   type ServerMsg,
   type Settings,
 } from "../src/shared/types";
-import { POOL_NAMES } from "../src/shared/words";
+import { isGame, POOL_NAMES, poolNames } from "../src/shared/words";
 
 type Player = {
   id: string;
@@ -40,7 +40,7 @@ type Round = {
   options?: string[];
   result?: ResultInfo;
   /** Per-imposter intel, fixed at round start. */
-  intel: Map<string, { cat?: string; sub?: string }>;
+  intel: Map<string, { cat?: string; sub?: string; bonus: boolean }>;
 };
 
 const GUESS_SECONDS = 30;
@@ -49,7 +49,8 @@ const LOBBY_GRACE_MS = 45_000;
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-export default class LolsterRoom implements Party.Server {
+/** One lobby = one Durable Object, addressed by its 4-letter code. State lives only in memory. */
+export class LolsterRoom extends Server {
   players = new Map<string, Player>();
   hostId = "";
   phase: Phase = "lobby";
@@ -61,11 +62,9 @@ export default class LolsterRoom implements Party.Server {
   timer: ReturnType<typeof setTimeout> | undefined;
   starter: string | undefined;
 
-  constructor(readonly room: Party.Room) {}
-
   // ---------- connection lifecycle ----------
 
-  onConnect(conn: Party.Connection) {
+  onConnect(conn: Connection) {
     // Players identify by a stable id kept in their browser, so a refresh rejoins the same seat.
     const p = this.players.get(conn.id);
     if (p) {
@@ -78,11 +77,11 @@ export default class LolsterRoom implements Party.Server {
     }
   }
 
-  onClose(conn: Party.Connection) {
+  onClose(conn: Connection) {
     const p = this.players.get(conn.id);
     if (!p) return;
     // Another tab of the same player may still be open.
-    for (const c of this.room.getConnections()) if (c.id === conn.id && c !== conn) return;
+    for (const c of this.getConnections()) if (c.id === conn.id && c !== conn) return;
     p.connected = false;
     p.leftAt = Date.now();
     if (this.hostId === p.id) this.passHost();
@@ -99,7 +98,8 @@ export default class LolsterRoom implements Party.Server {
     this.broadcast();
   }
 
-  onMessage(raw: string, sender: Party.Connection) {
+  onMessage(sender: Connection, raw: string | ArrayBuffer | ArrayBufferView) {
+    if (typeof raw !== "string") return;
     let msg: ClientMsg;
     try {
       msg = JSON.parse(raw);
@@ -195,7 +195,7 @@ export default class LolsterRoom implements Party.Server {
       case "kick": {
         if (!isHost || msg.id === id) return;
         const target = String(msg.id);
-        for (const c of this.room.getConnections()) {
+        for (const c of this.getConnections()) {
           if (c.id === target) {
             this.sendTo(c, { t: "kicked" });
             c.close();
@@ -221,7 +221,7 @@ export default class LolsterRoom implements Party.Server {
   startRound(): string | null {
     const ids = [...this.players.values()].filter((p) => p.connected).map((p) => p.id);
     if (ids.length < MIN_PLAYERS) return `You need at least ${MIN_PLAYERS} connected players.`;
-    const { cat, word } = drawWord(this.settings.cats, this.recent);
+    const { cat, word } = drawWord(this.settings.cats, this.recent, this.settings.game);
     this.recent = [word, ...this.recent].slice(0, 40);
     const count = Math.min(this.settings.imposters, maxImposters(ids.length));
     // Fully random order; an imposter who speaks first is compensated with extra intel.
@@ -456,11 +456,16 @@ export default class LolsterRoom implements Party.Server {
       const x = Math.round(Number(v));
       return Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : d;
     };
-    const cats = Array.isArray(s.cats) ? s.cats.filter((c) => POOL_NAMES.includes(c)) : cur.cats;
+    const game = isGame(s.game) ? s.game : cur.game;
+    const names = poolNames(game);
+    // Switching game resets the pools to everything in the new game.
+    let cats = game !== cur.game ? names : Array.isArray(s.cats) ? s.cats.filter((c) => names.includes(c)) : cur.cats;
+    if (!cats.length) cats = cur.game === game ? cur.cats : names;
     this.settings = {
       imposters: int(s.imposters ?? cur.imposters, 1, Math.max(maxImposters(n), 1, 7), cur.imposters),
       hint: typeof s.hint === "boolean" ? s.hint : cur.hint,
-      cats: cats.length ? cats : cur.cats,
+      game,
+      cats,
       clueRounds: int(s.clueRounds ?? cur.clueRounds, 0, 3, cur.clueRounds),
       discussSeconds: int(s.discussSeconds ?? cur.discussSeconds, 0, 600, cur.discussSeconds),
       clueSeconds: int(s.clueSeconds ?? cur.clueSeconds, 0, 120, cur.clueSeconds),
@@ -506,7 +511,7 @@ export default class LolsterRoom implements Party.Server {
         voted: !!r?.votes.has(p.id),
       }));
     return {
-      code: this.room.id,
+      code: this.name,
       hostId: this.hostId,
       phase: this.phase,
       round: this.roundNo,
@@ -525,16 +530,27 @@ export default class LolsterRoom implements Party.Server {
     };
   }
 
-  sendTo(conn: Party.Connection, msg: ServerMsg | RoomState) {
+  sendTo(conn: Connection, msg: ServerMsg | RoomState) {
     const m: ServerMsg = "t" in msg ? msg : { t: "state", state: msg, now: Date.now() };
     conn.send(JSON.stringify(m));
   }
 
-  error(conn: Party.Connection, message: string) {
+  error(conn: Connection, message: string) {
     this.sendTo(conn, { t: "error", message });
   }
 
   broadcast() {
-    for (const c of this.room.getConnections()) this.sendTo(c, this.stateFor(c.id));
+    for (const c of this.getConnections()) this.sendTo(c, this.stateFor(c.id));
   }
 }
+
+type Env = { Main: DurableObjectNamespace<LolsterRoom> };
+
+export default {
+  async fetch(req: Request, env: Env): Promise<Response> {
+    return (
+      (await routePartykitRequest(req, env as unknown as Record<string, unknown>)) ??
+      new Response("Lolster lobby server", { status: 404 })
+    );
+  },
+};

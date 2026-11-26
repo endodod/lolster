@@ -321,14 +321,229 @@ export const TREE: Record<string, Record<string, string[]>> = {
   }
 };
 
+/** Deadlock pools. Category names must not collide with League ones. */
+export const DEADLOCK_TREE: Record<string, Record<string, string[]>> = {
+  "Heroes": {
+    "Heroes": [
+      "Abrams",
+      "Bebop",
+      "Calico",
+      "Dynamo",
+      "Grey Talon",
+      "Haze",
+      "Holliday",
+      "Infernus",
+      "Ivy",
+      "Kelvin",
+      "Lady Geist",
+      "Lash",
+      "McGinnis",
+      "Mirage",
+      "Mo & Krill",
+      "Paradox",
+      "Pocket",
+      "Seven",
+      "Shiv",
+      "Sinclair",
+      "Vindicta",
+      "Viscous",
+      "Vyper",
+      "Warden",
+      "Wraith",
+      "Yamato"
+    ]
+  },
+  "Shop Items": {
+    "Weapon items": [
+      "Basic Magazine",
+      "Close Quarters",
+      "Headshot Booster",
+      "High-Velocity Mag",
+      "Monster Rounds",
+      "Rapid Rounds",
+      "Restorative Shot",
+      "Active Reload",
+      "Kinetic Dash",
+      "Long Range",
+      "Melee Charge",
+      "Mystic Shot",
+      "Slowing Bullets",
+      "Swift Striker",
+      "Berserker",
+      "Burst Fire",
+      "Headhunter",
+      "Hunter's Aura",
+      "Intensifying Magazine",
+      "Sharpshooter",
+      "Tesla Bullets",
+      "Titanic Magazine",
+      "Toxic Bullets",
+      "Alchemical Fire",
+      "Crippling Headshot",
+      "Glass Cannon",
+      "Lucky Shot",
+      "Ricochet",
+      "Silencer",
+      "Vampiric Burst"
+    ],
+    "Vitality items": [
+      "Extra Health",
+      "Extra Regen",
+      "Extra Stamina",
+      "Healing Rite",
+      "Melee Lifesteal",
+      "Sprint Boots",
+      "Bullet Lifesteal",
+      "Combat Barrier",
+      "Debuff Reducer",
+      "Enduring Speed",
+      "Healbane",
+      "Healing Booster",
+      "Reactive Barrier",
+      "Spirit Lifesteal",
+      "Bullet Armor",
+      "Spirit Armor",
+      "Divine Barrier",
+      "Fortitude",
+      "Lifestrike",
+      "Majestic Leap",
+      "Metal Skin",
+      "Rescue Beam",
+      "Veil Walker",
+      "Colossus",
+      "Diviner's Kevlar",
+      "Inhibitor",
+      "Leech",
+      "Phantom Strike",
+      "Siphon Bullets",
+      "Unstoppable"
+    ],
+    "Spirit items": [
+      "Extra Charge",
+      "Extra Spirit",
+      "Mystic Burst",
+      "Mystic Reach",
+      "Spirit Strike",
+      "Infuser",
+      "Cold Front",
+      "Decay",
+      "Duration Extender",
+      "Improved Cooldown",
+      "Mystic Vulnerability",
+      "Quicksilver Reload",
+      "Slowing Hex",
+      "Suppressor",
+      "Withering Whip",
+      "Ethereal Shift",
+      "Improved Burst",
+      "Improved Spirit",
+      "Knockdown",
+      "Rapid Recharge",
+      "Silence Glyph",
+      "Superior Cooldown",
+      "Superior Duration",
+      "Torment Pulse",
+      "Boundless Spirit",
+      "Curse",
+      "Echo Shard",
+      "Magic Carpet",
+      "Mystic Reverb",
+      "Refresher"
+    ]
+  },
+  "Map & Objectives": {
+    "Objectives & bosses": [
+      "Guardian",
+      "Walker",
+      "Base Guardian",
+      "Shrine",
+      "Patron",
+      "Weakened Patron",
+      "Mid Boss",
+      "Rejuvenator",
+      "Soul Urn",
+      "Sinner's Sacrifice"
+    ],
+    "Map & creatures": [
+      "Troopers",
+      "Denizens",
+      "Zipline",
+      "Lane",
+      "Jungle Camp",
+      "Breakable Crate",
+      "Golden Statue",
+      "Shop",
+      "Curiosity Shop",
+      "Teleporter",
+      "Base",
+      "Bridge"
+    ]
+  },
+  "Mechanics & Slang": {
+    "Movement & combat": [
+      "Parry",
+      "Dash Jump",
+      "Wall Jump",
+      "Slide",
+      "Heavy Melee",
+      "Light Melee",
+      "Headshot",
+      "Stamina",
+      "Bullet Velocity",
+      "Ultimate",
+      "Stun",
+      "Silence",
+      "Ability Upgrade"
+    ],
+    "Economy & macro": [
+      "Souls",
+      "Deny",
+      "Last Hit",
+      "Soul Orb",
+      "Flex Slot",
+      "Ability Points",
+      "Spirit Power",
+      "Push",
+      "Rotate",
+      "Lane Swap",
+      "Team Fight",
+      "Rejuv Steal",
+      "Comeback Bounty"
+    ]
+  },
+  "Factions & Lore": {
+    "Factions & lore": [
+      "Amber Hand",
+      "Sapphire Flame",
+      "Hidden King",
+      "Archmother",
+      "The Cursed Apple",
+      "The Oracle",
+      "Rituals",
+      "Occult"
+    ]
+  }
+};
+
+export type Game = "lol" | "deadlock";
+export const GAMES: Record<Game, { label: string; tree: Record<string, Record<string, string[]>> }> = {
+  lol: { label: "League of Legends", tree: TREE },
+  deadlock: { label: "Deadlock", tree: DEADLOCK_TREE },
+};
+export const isGame = (g: unknown): g is Game => g === "lol" || g === "deadlock";
+export const poolNames = (g: Game) => Object.keys(GAMES[g].tree);
+
+const ALL: Record<string, Record<string, string[]>> = { ...TREE, ...DEADLOCK_TREE };
+
 export const POOLS: Record<string, string[]> = Object.fromEntries(
-  Object.entries(TREE).map(([cat, subs]) => [cat, Object.values(subs).flat()]),
+  Object.entries(ALL).map(([cat, subs]) => [cat, Object.values(subs).flat()]),
 );
 
 export const subOf = (cat: string, word: string) =>
-  Object.entries(TREE[cat] ?? {}).find(([, ws]) => ws.includes(word))?.[0];
+  Object.entries(ALL[cat] ?? {}).find(([, ws]) => ws.includes(word))?.[0];
 
-export const POOL_NAMES = Object.keys(POOLS);
+/** League pool names (the default game). */
+export const POOL_NAMES = poolNames("lol");
 
 export function pick<T>(a: T[]): T {
   return a[Math.floor(Math.random() * a.length)];
@@ -344,9 +559,9 @@ export function shuffle<T>(a: T[]): T[] {
 }
 
 /** Choose a category and word from the enabled pools, avoiding recently used words. */
-export function drawWord(cats: string[], recent: string[] = []): { cat: string; word: string } {
-  const valid = cats.filter((c) => POOLS[c]);
-  const use = valid.length ? valid : POOL_NAMES;
+export function drawWord(cats: string[], recent: string[] = [], game: Game = "lol"): { cat: string; word: string } {
+  const valid = cats.filter((c) => GAMES[game].tree[c]);
+  const use = valid.length ? valid : poolNames(game);
   const all = use.flatMap((cat) => POOLS[cat].map((word) => ({ cat, word })));
   const fresh = all.filter((w) => !recent.includes(w.word));
   return pick(fresh.length ? fresh : all);
@@ -367,10 +582,15 @@ export function guessOptions(cat: string, word: string, n = 8): string[] {
 export function imposterIntel(cat: string, word: string, hint: boolean, first: boolean) {
   const tier = (hint ? 1 : 0) + (first ? 1 : 0);
   const sub = subOf(cat, word);
+  const sharp =
+    tier >= 2 && !!sub && Object.keys(ALL[cat]).length > 1 && ALL[cat][sub].length >= MIN_SUB_SIZE;
   return {
+    /** True when speaking first actually improved the hint. */
+    bonus: first && (hint ? sharp : true),
     cat: tier >= 1 ? cat : undefined,
     // Tiny subcategories (e.g. Boots: 3 words) would nearly give the word away, so skip them.
-    sub: tier >= 2 && sub && TREE[cat][sub].length >= MIN_SUB_SIZE ? sub : undefined,
+    // A category with a single subcategory (Deadlock heroes) has nothing sharper to give.
+    sub: sharp ? sub : undefined,
   };
 }
 

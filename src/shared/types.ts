@@ -1,4 +1,8 @@
+import type { Game } from "./words";
+
 export type Settings = {
+  /** Which game the words come from. */
+  game: Game;
   imposters: number;
   /** Imposter is told the category. */
   hint: boolean;
@@ -13,6 +17,7 @@ export type Settings = {
 };
 
 export const DEFAULT_SETTINGS: Settings = {
+  game: "lol",
   imposters: 1,
   hint: true,
   cats: [],
@@ -66,6 +71,8 @@ export type You = {
   partners?: string[];
   /** Sharper hint for an imposter who speaks first. */
   sub?: string;
+  /** Speaking first improved this imposter's hint. */
+  bonus?: boolean;
   /** You speak first this round. */
   first?: boolean;
   vote?: string;

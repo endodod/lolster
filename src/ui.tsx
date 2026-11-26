@@ -1,6 +1,6 @@
 import type { ComponentChildren } from "preact";
 import { useEffect, useState } from "preact/hooks";
-import { POOL_NAMES } from "./shared/words";
+import { GAMES, poolNames, type Game } from "./shared/words";
 
 export function Stepper(p: {
   label: string;
@@ -51,7 +51,8 @@ export function Switch(p: { label: string; checked: boolean; onChange?: (v: bool
   );
 }
 
-export function Pools(p: { value: string[]; onChange?: (v: string[]) => void }) {
+export function Pools(p: { game: Game; value: string[]; onChange?: (v: string[]) => void }) {
+  const POOL_NAMES = poolNames(p.game);
   const toggle = (k: string) => {
     if (!p.onChange) return;
     const next = p.value.includes(k) ? p.value.filter((x) => x !== k) : [...p.value, k];
@@ -104,7 +105,7 @@ export function Timer(p: { left: number | null; total?: number; done?: string })
 
 export type CardFace =
   | { kind: "crew"; word: string; cat: string }
-  | { kind: "imposter"; cat?: string; partners?: string[]; sub?: string; first?: boolean };
+  | { kind: "imposter"; cat?: string; partners?: string[]; sub?: string; bonus?: boolean };
 
 /** The flip card: front shows who it belongs to, back shows the secret. */
 export function Card(p: {
@@ -145,7 +146,7 @@ export function Card(p: {
               <div class="tag">You are the</div>
               <div class="word">Imposter</div>
               <div class="cat">{p.face.cat ? `Category: ${p.face.cat}${p.face.sub ? ` › ${p.face.sub}` : ""}` : "No hint. Blend in and work it out."}</div>
-              {p.face.first && p.face.cat && (
+              {p.face.bonus && p.face.cat && (
                 <div class="hint">{p.face.sub ? "You speak first, so your hint is sharper." : "You speak first, so you get the category as a bonus."}</div>
               )}
               {p.face.partners?.length ? <div class="hint">Fellow imposters: {p.face.partners.join(", ")}</div> : null}
@@ -231,4 +232,17 @@ export function useCover() {
     </button>
   ) : null;
   return { covered, cover: () => setCovered(true), overlay };
+}
+
+/** League / Deadlock switch. */
+export function GamePicker(p: { value: Game; onChange?: (g: Game) => void }) {
+  return (
+    <div class="seg" role="radiogroup" aria-label="Game">
+      {(Object.keys(GAMES) as Game[]).map((g) => (
+        <button role="radio" aria-checked={p.value === g} disabled={!p.onChange && p.value !== g} onClick={() => p.onChange?.(g)}>
+          {GAMES[g].label}
+        </button>
+      ))}
+    </div>
+  );
 }

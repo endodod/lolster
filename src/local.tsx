@@ -1,10 +1,10 @@
 import { useEffect, useState } from "preact/hooks";
 import { maxImposters, MAX_PLAYERS, MIN_PLAYERS, NAME_MAX } from "./shared/types";
-import { drawWord, imposterIntel, POOL_NAMES, shuffle } from "./shared/words";
+import { drawWord, imposterIntel, isGame, poolNames, shuffle, type Game } from "./shared/words";
 import { store } from "./store";
-import { Card, fmtTime, Panel, Pools, Stepper, Switch, Timer, type CardFace } from "./ui";
+import { Card, fmtTime, GamePicker, Panel, Pools, Stepper, Switch, Timer, type CardFace } from "./ui";
 
-type LocalSettings = { n: number; imp: number; hint: boolean; seconds: number; cats: string[]; names: string[] };
+type LocalSettings = { game: Game; n: number; imp: number; hint: boolean; seconds: number; cats: string[]; names: string[] };
 type Round = {
   word: string;
   cat: string;
@@ -13,14 +13,15 @@ type Round = {
   starter: number;
 };
 
-const DEFAULTS: LocalSettings = { n: 5, imp: 1, hint: true, seconds: 180, cats: [...POOL_NAMES], names: [] };
+const DEFAULTS: LocalSettings = { game: "lol", n: 5, imp: 1, hint: true, seconds: 180, cats: poolNames("lol"), names: [] };
 const TIMES = [0, 60, 120, 180, 240, 300];
 
 export function Local(p: { onExit: () => void }) {
   const [s, setS] = useState<LocalSettings>(() => {
     const v = { ...DEFAULTS, ...store.get<Partial<LocalSettings>>("lolster.local", {}) };
-    v.cats = v.cats.filter((c) => POOL_NAMES.includes(c));
-    if (!v.cats.length) v.cats = [...POOL_NAMES];
+    if (!isGame(v.game)) v.game = "lol";
+    v.cats = v.cats.filter((c) => poolNames(v.game).includes(c));
+    if (!v.cats.length) v.cats = poolNames(v.game);
     return v;
   });
   const [stage, setStage] = useState<"setup" | "pass" | "talk">("setup");
@@ -41,13 +42,13 @@ export function Local(p: { onExit: () => void }) {
   const name = (i: number) => s.names[i]?.trim() || `Player ${i + 1}`;
 
   const start = () => {
-    const { cat, word } = drawWord(s.cats, recent);
+    const { cat, word } = drawWord(s.cats, recent, s.game);
     setRecent([word, ...recent].slice(0, 40));
     const imps = new Set(shuffle([...Array(s.n).keys()]).slice(0, s.imp));
     const starter = Math.floor(Math.random() * s.n);
     const faces: CardFace[] = [...Array(s.n).keys()].map((i) =>
       imps.has(i)
-        ? { kind: "imposter", first: i === starter, ...imposterIntel(cat, word, s.hint, i === starter) }
+        ? { kind: "imposter", ...imposterIntel(cat, word, s.hint, i === starter) }
         : { kind: "crew", word, cat },
     );
     setRound({ word, cat, imps, faces, starter });
@@ -86,6 +87,7 @@ export function Local(p: { onExit: () => void }) {
   if (stage === "setup")
     return (
       <section>
+        <GamePicker value={s.game} onChange={(game) => update({ game, cats: poolNames(game) })} />
         <Panel>
           <Stepper label="Players" value={s.n} min={MIN_PLAYERS} max={MAX_PLAYERS} onChange={(n) => update({ n })} />
           <Stepper label="Imposters" value={s.imp} min={1} max={maxImposters(s.n)} onChange={(imp) => update({ imp })} />
@@ -99,7 +101,7 @@ export function Local(p: { onExit: () => void }) {
             onChange={(i) => update({ seconds: TIMES[i] })}
           />
         </Panel>
-        <Pools value={s.cats} onChange={(cats) => update({ cats })} />
+        <Pools game={s.game} value={s.cats} onChange={(cats) => update({ cats })} />
         <Panel>
           <span class="lbl">
             Names <small class="note">optional</small>

@@ -84,7 +84,7 @@ export function App() {
               onInput={(e) => setJoin(cleanCode((e.target as HTMLInputElement).value))} />
             <button type="submit" disabled={!clean || code.length !== 4}>Join</button>
           </form>
-          {!clean && <small>Pick a summoner name first.</small>}
+          {!clean && <small>Pick a name first.</small>}
         </div>
       </Panel>
       <Panel>
@@ -99,12 +99,12 @@ export function App() {
       <Panel>
         <span class="lbl">How it works</span>
         <ol class="hint" style="padding-left:20px;margin:6px 0 0">
-          <li>Everyone gets the same League word, except the imposter.</li>
+          <li>Everyone gets the same League or Deadlock word, except the imposter.</li>
           <li>Take turns giving one clue. Not too obvious, not too vague.</li>
           <li>Vote out the imposter. If caught, they get one guess at the word to steal the win.</li>
         </ol>
       </Panel>
-      <p class="foot">Fan-made party game. Not endorsed by Riot Games.</p>
+      <p class="foot">Fan-made party game. Not endorsed by Riot Games or Valve.</p>
     </main>
   );
 }
@@ -113,14 +113,14 @@ function Header({ small }: { small?: boolean }) {
   return (
     <>
       <h1 style={small ? "font-size:30px" : undefined}>Lolster</h1>
-      {!small && <p class="sub">Find the summoner who doesn't know the word.</p>}
+      {!small && <p class="sub">Find the one who doesn't know the word. League of Legends or Deadlock.</p>}
     </>
   );
 }
 
 function NameInput(p: { value: string; onChange: (v: string) => void; autoFocus?: boolean }) {
   return (
-    <input class="text" value={p.value} maxLength={NAME_MAX} placeholder="Summoner name" aria-label="Summoner name" autoFocus={p.autoFocus}
+    <input class="text" value={p.value} maxLength={NAME_MAX} placeholder="Your name" aria-label="Your name" autoFocus={p.autoFocus}
       autocomplete="nickname" onInput={(e) => p.onChange((e.target as HTMLInputElement).value)} />
   );
 }

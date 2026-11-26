@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lolster-party",
+  "main": "party/server.ts",
+  "compatibility_date": "2026-11-01",
+  "durable_objects": {
+    "bindings": [{ "name": "Main", "class_name": "LolsterRoom" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["LolsterRoom"] }]
+}

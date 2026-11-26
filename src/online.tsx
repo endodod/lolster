@@ -11,7 +11,7 @@ import {
   type Settings,
 } from "./shared/types";
 import { playerId, store } from "./store";
-import { Card, fmtTime, Panel, Peek, Pools, Stepper, Switch, Timer, Toast, useCountdown, useCover, type CardFace } from "./ui";
+import { Card, fmtTime, GamePicker, Panel, Peek, Pools, Stepper, Switch, Timer, Toast, useCountdown, useCover, type CardFace } from "./ui";
 
 const HOST = (import.meta.env.VITE_PARTYKIT_HOST as string | undefined) ?? "localhost:1999";
 
@@ -159,7 +159,7 @@ function Lobby({ state, send, onLeave }: G & { onLeave: () => void }) {
 
       <Panel>
         <div class="row">
-          <span class="lbl">Summoners ({state.players.length})</span>
+          <span class="lbl">Players ({state.players.length})</span>
           {state.round > 0 && <small>Round {state.round} done</small>}
         </div>
         <ul class="players">
@@ -187,6 +187,7 @@ function Lobby({ state, send, onLeave }: G & { onLeave: () => void }) {
         </ul>
       </Panel>
 
+      <GamePicker value={st.game} onChange={ro ? undefined : (game) => set({ game })} />
       <Panel>
         {ro && <small>Only the host can change settings.</small>}
         <Stepper
@@ -227,7 +228,7 @@ function Lobby({ state, send, onLeave }: G & { onLeave: () => void }) {
         />
         <small>{st.clueRounds > 0 ? "Clues are typed in turn, then everyone votes." : "Say your clues out loud (same room or voice call), then vote here."}</small>
       </Panel>
-      <Pools value={st.cats} onChange={ro ? undefined : (cats) => set({ cats })} />
+      <Pools game={st.game} value={st.cats} onChange={ro ? undefined : (cats) => set({ cats })} />
 
       {host ? (
         <button class="big" disabled={online < MIN_PLAYERS} onClick={() => send({ t: "start" })}>
@@ -248,7 +249,7 @@ function Lobby({ state, send, onLeave }: G & { onLeave: () => void }) {
 function myFace(s: RoomState): CardFace | null {
   const y = s.you;
   if (y.role === "crew") return { kind: "crew", word: y.word!, cat: y.cat! };
-  if (y.role === "imposter") return { kind: "imposter", cat: y.cat, partners: y.partners?.map((id) => nameOf(s, id)), sub: y.sub, first: y.first };
+  if (y.role === "imposter") return { kind: "imposter", cat: y.cat, partners: y.partners?.map((id) => nameOf(s, id)), sub: y.sub, bonus: y.bonus };
   return null;
 }
 
