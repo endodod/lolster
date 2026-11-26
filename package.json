@@ -1,0 +1,25 @@
+{
+  "name": "lolster",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n web,party \"vite\" \"partykit dev\"",
+    "dev:web": "vite",
+    "dev:party": "partykit dev",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "deploy:party": "partykit deploy"
+  },
+  "dependencies": {
+    "partysocket": "^1.3.0",
+    "preact": "^10.29.8"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.6",
+    "concurrently": "^10.0.7",
+    "partykit": "^0.0.115",
+    "typescript": "^7.0.2",
+    "vite": "^7.3.8"
+  }
+}
