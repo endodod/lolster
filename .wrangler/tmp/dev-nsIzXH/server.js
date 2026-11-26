@@ -887,525 +887,67 @@ var Server = class extends DurableObject {
 // src/shared/words.ts
 var TREE = {
   "Champions": {
-    "Top lane": [
-      "Darius",
-      "Garen",
-      "Malphite",
-      "Sett",
-      "Riven",
-      "Fiora",
-      "Jax",
-      "Nasus",
-      "Renekton",
-      "Aatrox",
-      "Mordekaiser",
-      "Illaoi",
-      "Gwen",
-      "Ornn",
-      "Singed",
-      "K'Sante",
-      "Ambessa",
-      "Cho'Gath",
-      "Sion",
-      "Tryndamere",
-      "Kled",
-      "Urgot",
-      "Teemo"
-    ],
-    "Jungle": [
-      "Lee Sin",
-      "Master Yi",
-      "Kha'Zix",
-      "Rengar",
-      "Evelynn",
-      "Shaco",
-      "Amumu",
-      "Viego",
-      "Kindred",
-      "Gragas",
-      "Bel'Veth",
-      "Briar",
-      "Ivern",
-      "Warwick",
-      "Vi",
-      "Rammus",
-      "Ekko"
-    ],
-    "Mid lane": [
-      "Ahri",
-      "Yasuo",
-      "Yone",
-      "Zed",
-      "Katarina",
-      "Annie",
-      "Akali",
-      "Veigar",
-      "Kassadin",
-      "Twisted Fate",
-      "Ryze",
-      "LeBlanc",
-      "Sylas",
-      "Zoe",
-      "Viktor",
-      "Hwei",
-      "Aurora",
-      "Vex",
-      "Mel",
-      "Ziggs",
-      "Xerath",
-      "Heimerdinger"
-    ],
-    "Bot lane (marksman)": [
-      "Jinx",
-      "Ezreal",
-      "Vayne",
-      "Ashe",
-      "Draven",
-      "Kai'Sa",
-      "Aphelios",
-      "Jhin",
-      "Caitlyn",
-      "Miss Fortune",
-      "Samira",
-      "Lucian",
-      "Smolder",
-      "Zeri",
-      "Kog'Maw"
-    ],
-    "Support": [
-      "Thresh",
-      "Blitzcrank",
-      "Leona",
-      "Nautilus",
-      "Pyke",
-      "Morgana",
-      "Soraka",
-      "Janna",
-      "Lulu",
-      "Nami",
-      "Yuumi",
-      "Bard",
-      "Vel'Koz",
-      "Lux",
-      "Rell",
-      "Sona",
-      "Zilean"
-    ]
+    "Top lane": ["Darius", "Garen", "Malphite", "Sett", "Riven", "Fiora", "Jax", "Nasus", "Renekton", "Aatrox", "Mordekaiser", "Illaoi", "Gwen", "Ornn", "Singed", "K'Sante", "Ambessa", "Cho'Gath", "Sion", "Tryndamere", "Kled", "Urgot", "Teemo"],
+    "Jungle": ["Lee Sin", "Master Yi", "Kha'Zix", "Rengar", "Evelynn", "Shaco", "Amumu", "Viego", "Kindred", "Gragas", "Bel'Veth", "Briar", "Ivern", "Warwick", "Vi", "Rammus", "Ekko"],
+    "Mid lane": ["Ahri", "Yasuo", "Yone", "Zed", "Katarina", "Annie", "Akali", "Veigar", "Kassadin", "Twisted Fate", "Ryze", "LeBlanc", "Sylas", "Zoe", "Viktor", "Hwei", "Aurora", "Vex", "Mel", "Ziggs", "Xerath", "Heimerdinger"],
+    "Bot lane (marksman)": ["Jinx", "Ezreal", "Vayne", "Ashe", "Draven", "Kai'Sa", "Aphelios", "Jhin", "Caitlyn", "Miss Fortune", "Samira", "Lucian", "Smolder", "Zeri", "Kog'Maw"],
+    "Support": ["Thresh", "Blitzcrank", "Leona", "Nautilus", "Pyke", "Morgana", "Soraka", "Janna", "Lulu", "Nami", "Yuumi", "Bard", "Vel'Koz", "Lux", "Rell", "Sona", "Zilean"]
   },
   "Items": {
-    "Starters, wards & potions": [
-      "Doran's Blade",
-      "Doran's Ring",
-      "Health Potion",
-      "Control Ward",
-      "Stealth Ward",
-      "Oracle Lens"
-    ],
-    "Boots": [
-      "Mercury's Treads",
-      "Berserker's Greaves",
-      "Boots of Swiftness"
-    ],
-    "Fighter & marksman items": [
-      "Infinity Edge",
-      "Blade of the Ruined King",
-      "Bloodthirster",
-      "Lord Dominik's Regards",
-      "Statikk Shiv",
-      "Rapid Firecannon",
-      "Kraken Slayer",
-      "Mercurial Scimitar",
-      "Edge of Night",
-      "Black Cleaver",
-      "Trinity Force",
-      "Spear of Shojin",
-      "Sterak's Gage",
-      "Guardian Angel"
-    ],
-    "Mage items": [
-      "Rabadon's Deathcap",
-      "Zhonya's Hourglass",
-      "Lich Bane",
-      "Mejai's Soulstealer",
-      "Void Staff",
-      "Rylai's Crystal Scepter",
-      "Morellonomicon",
-      "Hextech Rocketbelt",
-      "Luden's Companion",
-      "Banshee's Veil"
-    ],
-    "Tank items": [
-      "Thornmail",
-      "Warmog's Armor",
-      "Sunfire Aegis",
-      "Randuin's Omen",
-      "Frozen Heart",
-      "Heartsteel"
-    ]
+    "Starters, wards & potions": ["Doran's Blade", "Doran's Ring", "Health Potion", "Control Ward", "Stealth Ward", "Oracle Lens"],
+    "Boots": ["Mercury's Treads", "Berserker's Greaves", "Boots of Swiftness"],
+    "Fighter & marksman items": ["Infinity Edge", "Blade of the Ruined King", "Bloodthirster", "Lord Dominik's Regards", "Statikk Shiv", "Rapid Firecannon", "Kraken Slayer", "Mercurial Scimitar", "Edge of Night", "Black Cleaver", "Trinity Force", "Spear of Shojin", "Sterak's Gage", "Guardian Angel"],
+    "Mage items": ["Rabadon's Deathcap", "Zhonya's Hourglass", "Lich Bane", "Mejai's Soulstealer", "Void Staff", "Rylai's Crystal Scepter", "Morellonomicon", "Hextech Rocketbelt", "Luden's Companion", "Banshee's Veil"],
+    "Tank items": ["Thornmail", "Warmog's Armor", "Sunfire Aegis", "Randuin's Omen", "Frozen Heart", "Heartsteel"]
   },
   "Summoner Spells": {
-    "Offensive spells": [
-      "Ignite",
-      "Smite",
-      "Exhaust"
-    ],
-    "Movement spells": [
-      "Flash",
-      "Ghost",
-      "Teleport",
-      "Mark (Snowball)"
-    ],
-    "Defensive & sustain spells": [
-      "Barrier",
-      "Heal",
-      "Cleanse",
-      "Clarity"
-    ]
+    "Offensive spells": ["Ignite", "Smite", "Exhaust"],
+    "Movement spells": ["Flash", "Ghost", "Teleport", "Mark (Snowball)"],
+    "Defensive & sustain spells": ["Barrier", "Heal", "Cleanse", "Clarity"]
   },
   "Monsters & Objectives": {
-    "Epic monsters": [
-      "Baron Nashor",
-      "Elder Dragon",
-      "Rift Herald",
-      "Voidgrubs",
-      "Atakhan",
-      "Infernal Drake",
-      "Ocean Drake",
-      "Mountain Drake",
-      "Cloud Drake"
-    ],
-    "Jungle camps": [
-      "Scuttle Crab",
-      "Red Buff",
-      "Blue Buff",
-      "Raptors",
-      "Krugs",
-      "Gromp",
-      "Wolves"
-    ],
-    "Structures & minions": [
-      "Inhibitor",
-      "Nexus",
-      "Turret",
-      "Cannon Minion",
-      "Super Minion"
-    ]
+    "Epic monsters": ["Baron Nashor", "Elder Dragon", "Rift Herald", "Voidgrubs", "Atakhan", "Infernal Drake", "Ocean Drake", "Mountain Drake", "Cloud Drake"],
+    "Jungle camps": ["Scuttle Crab", "Red Buff", "Blue Buff", "Raptors", "Krugs", "Gromp", "Wolves"],
+    "Structures & minions": ["Inhibitor", "Nexus", "Turret", "Cannon Minion", "Super Minion"]
   },
   "Map & Modes": {
-    "Places on the Rift": [
-      "Fountain",
-      "River",
-      "Brush",
-      "Mid Lane",
-      "Top Lane",
-      "Bot Lane",
-      "Baron Pit",
-      "Dragon Pit",
-      "Jungle",
-      "Base",
-      "Tribush"
-    ],
-    "Maps & game modes": [
-      "Summoner's Rift",
-      "Howling Abyss",
-      "ARAM",
-      "Arena",
-      "Swiftplay",
-      "URF",
-      "One for All",
-      "Nexus Blitz"
-    ]
+    "Places on the Rift": ["Fountain", "River", "Brush", "Mid Lane", "Top Lane", "Bot Lane", "Baron Pit", "Dragon Pit", "Jungle", "Base", "Tribush"],
+    "Maps & game modes": ["Summoner's Rift", "Howling Abyss", "ARAM", "Arena", "Swiftplay", "URF", "One for All", "Nexus Blitz"]
   },
   "Game Terms": {
-    "Fights & plays": [
-      "Pentakill",
-      "First Blood",
-      "Ace",
-      "Dive",
-      "Kite",
-      "Gank",
-      "Shutdown Gold",
-      "Animation Cancel",
-      "Skill Shot",
-      "Smite Steal"
-    ],
-    "Laning & macro": [
-      "Backdoor",
-      "Recall",
-      "Freeze",
-      "Proxy Farm",
-      "Turret Plating",
-      "Dragon Soul",
-      "Minion Wave",
-      "Last Hit",
-      "Split Push",
-      "Roam",
-      "Wave Clear",
-      "Cheese"
-    ],
-    "Ranked & queue life": [
-      "Ranked",
-      "LP",
-      "Challenger",
-      "Iron IV",
-      "Promos",
-      "Duo Queue",
-      "Dodge",
-      "Ban Phase",
-      "Counter Pick",
-      "Surrender Vote",
-      "Inting",
-      "Tilt"
-    ]
+    "Fights & plays": ["Pentakill", "First Blood", "Ace", "Dive", "Kite", "Gank", "Shutdown Gold", "Animation Cancel", "Skill Shot", "Smite Steal"],
+    "Laning & macro": ["Backdoor", "Recall", "Freeze", "Proxy Farm", "Turret Plating", "Dragon Soul", "Minion Wave", "Last Hit", "Split Push", "Roam", "Wave Clear", "Cheese"],
+    "Ranked & queue life": ["Ranked", "LP", "Challenger", "Iron IV", "Promos", "Duo Queue", "Dodge", "Ban Phase", "Counter Pick", "Surrender Vote", "Inting", "Tilt"]
   },
   "Regions": {
-    "Nations & cities": [
-      "Demacia",
-      "Noxus",
-      "Ionia",
-      "Piltover",
-      "Zaun",
-      "Bilgewater",
-      "Bandle City"
-    ],
-    "Wild & mystic lands": [
-      "Freljord",
-      "Shurima",
-      "Targon",
-      "Shadow Isles",
-      "Ixtal",
-      "The Void"
-    ]
+    "Nations & cities": ["Demacia", "Noxus", "Ionia", "Piltover", "Zaun", "Bilgewater", "Bandle City"],
+    "Wild & mystic lands": ["Freljord", "Shurima", "Targon", "Shadow Isles", "Ixtal", "The Void"]
   },
   "Lore & Esports": {
-    "Lore & magic": [
-      "Runeterra",
-      "Hextech",
-      "Shimmer",
-      "Darkin",
-      "Black Mist",
-      "Poros",
-      "Zaun Undercity"
-    ],
-    "Esports": [
-      "Worlds",
-      "MSI",
-      "Faker",
-      "T1",
-      "LEC",
-      "LCK",
-      "Summoner's Cup",
-      "Rift Rivals"
-    ],
-    "Shows, games & skins": [
-      "Arcane",
-      "Ruined King",
-      "Star Guardian",
-      "Spirit Blossom",
-      "K/DA"
-    ]
+    "Lore & magic": ["Runeterra", "Hextech", "Shimmer", "Darkin", "Black Mist", "Poros", "Zaun Undercity"],
+    "Esports": ["Worlds", "MSI", "Faker", "T1", "LEC", "LCK", "Summoner's Cup", "Rift Rivals"],
+    "Shows, games & skins": ["Arcane", "Ruined King", "Star Guardian", "Spirit Blossom", "K/DA"]
   }
 };
 var DEADLOCK_TREE = {
   "Heroes": {
-    "Heroes": [
-      "Abrams",
-      "Bebop",
-      "Calico",
-      "Dynamo",
-      "Grey Talon",
-      "Haze",
-      "Holliday",
-      "Infernus",
-      "Ivy",
-      "Kelvin",
-      "Lady Geist",
-      "Lash",
-      "McGinnis",
-      "Mirage",
-      "Mo & Krill",
-      "Paradox",
-      "Pocket",
-      "Seven",
-      "Shiv",
-      "Sinclair",
-      "Vindicta",
-      "Viscous",
-      "Vyper",
-      "Warden",
-      "Wraith",
-      "Yamato"
-    ]
+    "Heroes": ["Abrams", "Bebop", "Calico", "Dynamo", "Grey Talon", "Haze", "Holliday", "Infernus", "Ivy", "Kelvin", "Lady Geist", "Lash", "McGinnis", "Mirage", "Mo & Krill", "Paradox", "Pocket", "Seven", "Shiv", "Sinclair", "Vindicta", "Viscous", "Vyper", "Warden", "Wraith", "Yamato"]
   },
   "Shop Items": {
-    "Weapon items": [
-      "Basic Magazine",
-      "Close Quarters",
-      "Headshot Booster",
-      "High-Velocity Mag",
-      "Monster Rounds",
-      "Rapid Rounds",
-      "Restorative Shot",
-      "Active Reload",
-      "Kinetic Dash",
-      "Long Range",
-      "Melee Charge",
-      "Mystic Shot",
-      "Slowing Bullets",
-      "Swift Striker",
-      "Berserker",
-      "Burst Fire",
-      "Headhunter",
-      "Hunter's Aura",
-      "Intensifying Magazine",
-      "Sharpshooter",
-      "Tesla Bullets",
-      "Titanic Magazine",
-      "Toxic Bullets",
-      "Alchemical Fire",
-      "Crippling Headshot",
-      "Glass Cannon",
-      "Lucky Shot",
-      "Ricochet",
-      "Silencer",
-      "Vampiric Burst"
-    ],
-    "Vitality items": [
-      "Extra Health",
-      "Extra Regen",
-      "Extra Stamina",
-      "Healing Rite",
-      "Melee Lifesteal",
-      "Sprint Boots",
-      "Bullet Lifesteal",
-      "Combat Barrier",
-      "Debuff Reducer",
-      "Enduring Speed",
-      "Healbane",
-      "Healing Booster",
-      "Reactive Barrier",
-      "Spirit Lifesteal",
-      "Bullet Armor",
-      "Spirit Armor",
-      "Divine Barrier",
-      "Fortitude",
-      "Lifestrike",
-      "Majestic Leap",
-      "Metal Skin",
-      "Rescue Beam",
-      "Veil Walker",
-      "Colossus",
-      "Diviner's Kevlar",
-      "Inhibitor",
-      "Leech",
-      "Phantom Strike",
-      "Siphon Bullets",
-      "Unstoppable"
-    ],
-    "Spirit items": [
-      "Extra Charge",
-      "Extra Spirit",
-      "Mystic Burst",
-      "Mystic Reach",
-      "Spirit Strike",
-      "Infuser",
-      "Cold Front",
-      "Decay",
-      "Duration Extender",
-      "Improved Cooldown",
-      "Mystic Vulnerability",
-      "Quicksilver Reload",
-      "Slowing Hex",
-      "Suppressor",
-      "Withering Whip",
-      "Ethereal Shift",
-      "Improved Burst",
-      "Improved Spirit",
-      "Knockdown",
-      "Rapid Recharge",
-      "Silence Glyph",
-      "Superior Cooldown",
-      "Superior Duration",
-      "Torment Pulse",
-      "Boundless Spirit",
-      "Curse",
-      "Echo Shard",
-      "Magic Carpet",
-      "Mystic Reverb",
-      "Refresher"
-    ]
+    "Weapon items": ["Basic Magazine", "Close Quarters", "Headshot Booster", "High-Velocity Mag", "Monster Rounds", "Rapid Rounds", "Restorative Shot", "Active Reload", "Kinetic Dash", "Long Range", "Melee Charge", "Mystic Shot", "Slowing Bullets", "Swift Striker", "Berserker", "Burst Fire", "Headhunter", "Hunter's Aura", "Intensifying Magazine", "Sharpshooter", "Tesla Bullets", "Titanic Magazine", "Toxic Bullets", "Alchemical Fire", "Crippling Headshot", "Glass Cannon", "Lucky Shot", "Ricochet", "Silencer", "Vampiric Burst"],
+    "Vitality items": ["Extra Health", "Extra Regen", "Extra Stamina", "Healing Rite", "Melee Lifesteal", "Sprint Boots", "Bullet Lifesteal", "Combat Barrier", "Debuff Reducer", "Enduring Speed", "Healbane", "Healing Booster", "Reactive Barrier", "Spirit Lifesteal", "Bullet Armor", "Spirit Armor", "Divine Barrier", "Fortitude", "Lifestrike", "Majestic Leap", "Metal Skin", "Rescue Beam", "Veil Walker", "Colossus", "Diviner's Kevlar", "Inhibitor", "Leech", "Phantom Strike", "Siphon Bullets", "Unstoppable"],
+    "Spirit items": ["Extra Charge", "Extra Spirit", "Mystic Burst", "Mystic Reach", "Spirit Strike", "Infuser", "Cold Front", "Decay", "Duration Extender", "Improved Cooldown", "Mystic Vulnerability", "Quicksilver Reload", "Slowing Hex", "Suppressor", "Withering Whip", "Ethereal Shift", "Improved Burst", "Improved Spirit", "Knockdown", "Rapid Recharge", "Silence Glyph", "Superior Cooldown", "Superior Duration", "Torment Pulse", "Boundless Spirit", "Curse", "Echo Shard", "Magic Carpet", "Mystic Reverb", "Refresher"]
   },
   "Map & Objectives": {
-    "Objectives & bosses": [
-      "Guardian",
-      "Walker",
-      "Base Guardian",
-      "Shrine",
-      "Patron",
-      "Weakened Patron",
-      "Mid Boss",
-      "Rejuvenator",
-      "Soul Urn",
-      "Sinner's Sacrifice"
-    ],
-    "Map & creatures": [
-      "Troopers",
-      "Denizens",
-      "Zipline",
-      "Lane",
-      "Jungle Camp",
-      "Breakable Crate",
-      "Golden Statue",
-      "Shop",
-      "Curiosity Shop",
-      "Teleporter",
-      "Base",
-      "Bridge"
-    ]
+    "Objectives & bosses": ["Guardian", "Walker", "Base Guardian", "Shrine", "Patron", "Weakened Patron", "Mid Boss", "Rejuvenator", "Soul Urn", "Sinner's Sacrifice"],
+    "Map & creatures": ["Troopers", "Denizens", "Zipline", "Lane", "Jungle Camp", "Breakable Crate", "Golden Statue", "Shop", "Curiosity Shop", "Teleporter", "Base", "Bridge"]
   },
   "Mechanics & Slang": {
-    "Movement & combat": [
-      "Parry",
-      "Dash Jump",
-      "Wall Jump",
-      "Slide",
-      "Heavy Melee",
-      "Light Melee",
-      "Headshot",
-      "Stamina",
-      "Bullet Velocity",
-      "Ultimate",
-      "Stun",
-      "Silence",
-      "Ability Upgrade"
-    ],
-    "Economy & macro": [
-      "Souls",
-      "Deny",
-      "Last Hit",
-      "Soul Orb",
-      "Flex Slot",
-      "Ability Points",
-      "Spirit Power",
-      "Push",
-      "Rotate",
-      "Lane Swap",
-      "Team Fight",
-      "Rejuv Steal",
-      "Comeback Bounty"
-    ]
+    "Movement & combat": ["Parry", "Dash Jump", "Wall Jump", "Slide", "Heavy Melee", "Light Melee", "Headshot", "Stamina", "Bullet Velocity", "Ultimate", "Stun", "Silence", "Ability Upgrade"],
+    "Economy & macro": ["Souls", "Deny", "Last Hit", "Soul Orb", "Flex Slot", "Ability Points", "Spirit Power", "Push", "Rotate", "Lane Swap", "Team Fight", "Rejuv Steal", "Comeback Bounty"]
   },
   "Factions & Lore": {
-    "Factions & lore": [
-      "Amber Hand",
-      "Sapphire Flame",
-      "Hidden King",
-      "Archmother",
-      "The Cursed Apple",
-      "The Oracle",
-      "Rituals",
-      "Occult"
-    ]
+    "Factions & lore": ["Amber Hand", "Sapphire Flame", "Hidden King", "Archmother", "The Cursed Apple", "The Oracle", "Rituals", "Occult"]
   }
 };
 var GAMES = {
